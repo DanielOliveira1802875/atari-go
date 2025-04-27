@@ -1,0 +1,5 @@
+pack.ps1
+.idea
+cmake-build-debug
+cmake-build-release
+Combined_Source_Dynamic.txt
