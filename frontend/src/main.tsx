@@ -9,7 +9,7 @@ import Home from "@/components/Home.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Toaster />
-    <BrowserRouter>
+    <BrowserRouter basename="/atari-go">
       <Routes>
         <Route path="/" element={<AppContainer />}>
           <Route path="/" element={<Home />} />

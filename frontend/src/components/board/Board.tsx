@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import UINode from "@/components/board/UINode";
-import { getUINodePosition, TUINodePosition } from "@/components/board/Helpers";
+import { getUINodePosition } from "@/components/board/Helpers";
 
 export type TCell = "." | "B" | "W";
 export type TPlayer = "B" | "W";
@@ -23,21 +23,20 @@ export default function Board() {
 
   const togglePlayer = () => {
     setCurrentPlayer((prev) => (prev === "B" ? "W" : "B"));
-  }
+  };
 
   // Initialize the Web Worker
   useEffect(() => {
-    const worker = new Worker(new URL('../../lib/wasm.worker.ts', import.meta.url), { type: 'module' });
+    const worker = new Worker(new URL("../../lib/wasm.worker.ts", import.meta.url), { type: "module" });
 
     worker.onmessage = (event) => {
       const { type, payload } = event.data;
 
-      if (type === 'initialized') {
+      if (type === "initialized") {
         setWasmLoading(false);
         setStatusMessage(`Your turn (Black)`);
         console.log("WebAssembly module loaded successfully in worker");
-      }
-      else if (type === 'moveDone') {
+      } else if (type === "moveDone") {
         console.log("Received move from worker:", payload);
 
         // Process the result
@@ -47,7 +46,7 @@ export default function Board() {
 
         setBoard(boardStr.split("") as TCell[]);
         setAiThinking(false);
-        togglePlayer()
+        togglePlayer();
 
         if (winnerStr) {
           setGameOver(true);
@@ -56,15 +55,14 @@ export default function Board() {
         } else {
           setStatusMessage(`Your turn (${currentPlayer === "B" ? "White" : "Black"})`);
         }
-      }
-      else if (type === 'error') {
+      } else if (type === "error") {
         console.error("Worker error:", payload);
         setStatusMessage(`Error: ${payload}`);
         setAiThinking(false);
       }
     };
 
-    worker.postMessage({ type: 'init' });
+    worker.postMessage({ type: "init" });
     workerRef.current = worker;
 
     return () => worker.terminate();
@@ -89,11 +87,11 @@ export default function Board() {
     const boardString = newBoard.join("");
     const timeLimitMs = 5000;
 
-    togglePlayer()
+    togglePlayer();
 
     workerRef.current.postMessage({
-      type: 'getBestMove',
-      payload: `${boardString};${timeLimitMs}`
+      type: "getBestMove",
+      payload: `${boardString};${timeLimitMs}`,
     });
   };
 
@@ -109,31 +107,18 @@ export default function Board() {
         <div className="flex items-center justify-center gap-2 mt-2">
           <span>Current player:</span>
           <span className={`w-5 h-5`}>
-              <UINode position={1} currentPlayer={currentPlayer} takenBy={currentPlayer} hideGrid />
-            </span>
-
+            <UINode position={getUINodePosition(size, 0)} currentPlayer={currentPlayer} takenBy={currentPlayer} hideGrid />
+          </span>
         </div>
       </div>
       <div className="bg-gradient-to-br from-stone-300 to-stone-400 rounded-xl overflow-hidden p-6 shadow-[0_4px_8px_rgba(0,0,0,0.6)] border-1 border-stone-600">
-        <div
-          className={`grid grid-cols-9 gap-0 w-[450px] h-[450px] relative ${!isBoardInteractive ? "opacity-70" : ""}`}
-        >
+        <div className={`grid grid-cols-9 gap-0 w-[450px] h-[450px] relative ${!isBoardInteractive ? "opacity-70" : ""}`}>
           {/* Overlay to prevent clicks when board is not interactive */}
-          {!isBoardInteractive && (
-            <div className="absolute inset-0 z-10 cursor-not-allowed" />
-          )}
+          {!isBoardInteractive && <div className="absolute inset-0 z-10 cursor-not-allowed" />}
 
           {board.map((cell: TCell, index: number) => (
-            <div
-              key={index}
-              className="w-[50px] h-[50px] cursor-pointer"
-              onClick={() => handleCellClick(index)}
-            >
-              <UINode
-                position={getUINodePosition(size, index)}
-                currentPlayer={currentPlayer}
-                takenBy={cell}
-              />
+            <div key={index} className="w-[50px] h-[50px] cursor-pointer" onClick={() => handleCellClick(index)}>
+              <UINode position={getUINodePosition(size, index)} currentPlayer={currentPlayer} takenBy={cell} />
             </div>
           ))}
         </div>
