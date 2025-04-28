@@ -27,7 +27,7 @@ private:
     }
 
     // Convert (row, col) into a single bit‐index: row-major, 0 ≤ row,col < BOARD_EDGE
-    static constexpr int pos_from_coord(int row, int col) {
+    static constexpr int pos_from_coord(const int row, const int col) {
         return row * BOARD_EDGE + col;
     }
 

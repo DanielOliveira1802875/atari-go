@@ -50,6 +50,7 @@ add_executable(atari_go
         MiniMax.cpp
         NeighborMasks.h
         Zobrist.h
+        BitboardHelper.h
 )
 
 # Include directories

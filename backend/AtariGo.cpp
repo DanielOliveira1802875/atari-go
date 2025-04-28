@@ -6,6 +6,8 @@
 #include <utility>
 #include <queue>
 
+#include "BBUtils.h"
+
 
 //Check if a given square has any occupied orthogonal neighbors.
 inline bool hasOccupiedNeighbor(const Board& b, int pos)
@@ -73,38 +75,28 @@ void AtariGo::computeLibertiesHeuristic(
         int& cntMinB,     int& cntMinW,
         int& totalB,      int& totalW )
 {
-
     Bitboard128 blackBoard = state.getBlackBits();
     Bitboard128 whiteBoard = state.getWhiteBits();
-    const Bitboard128 occupationBoard   = blackBoard | whiteBoard;
-
-    // buffer for flood-fill frontier
-    int stack[BOARD_SIZE];
-
-    auto pop_lsb = [](Bitboard128& bb) -> int {
-        int idx = __builtin_ctzll( static_cast<uint64_t>(bb) );
-        if constexpr (sizeof(Bitboard128) > 8)
-            idx = (bb & ((static_cast<Bitboard128>(1) << 64) - 1)) ? idx
-                 : 64 + __builtin_ctzll(static_cast<uint64_t>(bb >> 64));
-        bb &= bb - 1;
-        return idx;
-    };
+    const Bitboard128 occupationBoard = blackBoard | whiteBoard;
 
     // process both colours
     auto flood = [&](Bitboard128& pool, bool isBlack)
     {
-        bool  visited[BOARD_SIZE] = {};
-        while (pool)                             // unvisited stones remain
+        bool visited[BOARD_SIZE] = {};
+
+        while (pool)  // unvisited stones remain
         {
-            int seed = pop_lsb(pool);
+            // pop one stone index from pool
+            int seed = BBUtils::popLSB(pool);
             if (visited[seed]) continue;
 
             unsigned char liberties = 0;
-            int  stackSize = 0;
+            int stackSize = 0;
+            int stack[BOARD_SIZE];
             stack[stackSize++] = seed;
             visited[seed] = true;
 
-            // flood-fill this group
+            // flood‐fill this group
             while (stackSize)
             {
                 int pos = stack[--stackSize];
@@ -112,14 +104,16 @@ void AtariGo::computeLibertiesHeuristic(
 
                 // count liberties on empty neighbours
                 Bitboard128 libBits = nbrMask & ~occupationBoard;
-                liberties  += __builtin_popcountll( static_cast<uint64_t>(libBits) )
-                            + __builtin_popcountll( static_cast<uint64_t>(libBits >> 64) );
+                liberties += BBUtils::bitCount(libBits);
 
                 // push same-colour neighbours that aren’t visited yet
-                Bitboard128 same = nbrMask & (isBlack ? state.getBlackBits() : state.getWhiteBits());
+                Bitboard128 same = nbrMask & (isBlack
+                    ? state.getBlackBits()
+                    : state.getWhiteBits());
+
                 while (same)
                 {
-                    int n = pop_lsb(same);
+                    int n = BBUtils::popLSB(same);
                     if (!visited[n])
                     {
                         visited[n] = true;
