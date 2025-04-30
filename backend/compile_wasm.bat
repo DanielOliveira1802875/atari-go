@@ -14,6 +14,7 @@ em++ -std=c++17 -O3 -flto -ffast-math -msimd128 ^
   wasm_interface.cpp AtariGo.cpp ^
   -o "..\Frontend\public\wasm\atari_go.js" ^
   -s WASM=1 ^
+  -s DISABLE_EXCEPTION_CATCHING=0 ^
   -s EXPORTED_FUNCTIONS="['_getBestMove']" ^
   -s EXPORTED_RUNTIME_METHODS="['ccall', 'cwrap', 'lengthBytesUTF8']" ^
   -s ALLOW_MEMORY_GROWTH=1 ^

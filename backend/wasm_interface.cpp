@@ -57,7 +57,7 @@ BoardParseResult parseBoard(const char* boardStr) {
 
     // Parse the board
     for (int i = 0; i < BOARD_SIZE && i < boardData.length(); i++) {
-        char c = std::tolower(boardData[i]);
+        const char c = std::tolower(boardData[i]);
         if (c == 'b') result.board.setBlack(i);
         else if (c == 'w') result.board.setWhite(i);
     }

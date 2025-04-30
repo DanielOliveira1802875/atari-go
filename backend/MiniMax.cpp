@@ -5,186 +5,149 @@
 #include "unordered_dense.h"
 #include "AtariGo.h"
 
-enum Bound { EXACT, LOWER, UPPER };
-
-// Exception used to signal time cutoff
-struct TimeUpException {};
+namespace {
+    inline Player opponent(Player p) { return p == BLACK ? WHITE : BLACK; }
+    constexpr int INF = WIN * 2;
+    constexpr uint64_t CHECK_INTERVAL = 2048;
+}
 
 class MiniMax {
 private:
-    static constexpr int INF = WIN * 2;
+    enum class Bound { EXACT, LOWER, UPPER };
 
     // Transposition table: signature -> (score, depth, bound)
-    mutable ankerl::unordered_dense::map<uint64_t, std::tuple<int, int, Bound>> transTable;
+    mutable ankerl::unordered_dense::map<uint64_t, std::tuple<int, int, Bound> > tt;
 
-    // Node counter for throttled clock checks
-    mutable uint64_t nodeCount = 0;
-    static constexpr uint64_t CHECK_INTERVAL = 2048;  // check clock every 2048 nodes
+    struct SearchContext {
+        const std::chrono::steady_clock::time_point start;
+        const std::chrono::milliseconds timeLimit;
+        bool timedOut = false;
+        uint64_t nodeCount = 0;
+    };
 
-    static Player getOpponent(Player p) {
-        return p == BLACK ? WHITE : BLACK;
-    }
+    int minimax(Board &state, int depth, int alpha, int beta, SearchContext &ctx) const {
 
-    int minimax(Board &state,
-                int depth,
-                int alpha,
-                int beta,
-                const std::chrono::steady_clock::time_point &startTime,
-                const std::chrono::milliseconds &timeLimit) const {
+        // Check if the search has timed out
+        if (ctx.timedOut) return 0;
 
         // Increment node count and occasionally check time
-        if (++nodeCount % CHECK_INTERVAL == 0) {
-            if (std::chrono::steady_clock::now() - startTime >= timeLimit) {
-                throw TimeUpException();
+        if (++ctx.nodeCount % CHECK_INTERVAL == 0) {
+            if (std::chrono::steady_clock::now() - ctx.start >= ctx.timeLimit) {
+                ctx.timedOut = true;
+                return 0;
             }
         }
 
+        // Check transposition table
         uint64_t sig = state.getSignature();
-        auto it = transTable.find(sig);
-        if (it != transTable.end()) {
+        if (auto it = tt.find(sig); it != tt.end()) {
             auto &[score, storedDepth, flag] = it->second;
             if (storedDepth >= depth) {
                 switch (flag) {
-                    case EXACT:
-                        return score;
-                    case LOWER:
-                        alpha = std::max(alpha, score);
+                    case Bound::EXACT: return score;
+                    case Bound::LOWER: alpha = std::max(alpha, score);
                         break;
-                    case UPPER:
-                        beta = std::min(beta, score);
+                    case Bound::UPPER: beta = std::min(beta, score);
                         break;
                 }
                 if (alpha >= beta) return score;
             }
         }
 
-        if (depth == 0 || AtariGo::isTerminal(state)) {
-            return state.getHeuristic();
-        }
+        // Check if the game is over or if we reached the maximum depth
+        if (depth == 0 || AtariGo::isTerminal(state)) return state.getHeuristic();
 
-        auto successors = AtariGo::generateSuccessors(state);
-        if (successors.empty()) {
-            return state.getHeuristic();
-        }
+        // Generate successors
+        auto succ = AtariGo::generateSuccessors(state);
+        if (succ.empty()) return state.getHeuristic();
 
-        const Player current = state.getPlayerToMove();
-        int origAlpha = alpha;
-        int origBeta = beta;
-        int bestValue = (current == WHITE) ? -INF : INF;
+        const Player toMove = state.getPlayerToMove();
+        int best = (toMove == WHITE) ? -INF : INF;
+        int origAlpha = alpha, origBeta = beta;
 
-        for (auto &s : successors) {
-            int eval = minimax(s, depth - 1, alpha, beta, startTime, timeLimit);
-            if (current == WHITE) {
-                bestValue = std::max(bestValue, eval);
-                alpha = std::max(alpha, bestValue);
+        // Iterate through successors
+        for (auto &child: succ) {
+            int score = minimax(child, depth - 1, alpha, beta, ctx);
+            if (ctx.timedOut) return 0;
+
+            if (toMove == WHITE) {
+                best = std::max(best, score);
+                alpha = std::max(alpha, best);
             } else {
-                bestValue = std::min(bestValue, eval);
-                beta = std::min(beta, bestValue);
+                best = std::min(best, score);
+                beta = std::min(beta, best);
             }
             if (alpha >= beta) break;
         }
 
-        // Store in transposition table
-        Bound flag;
-        if (bestValue >= origBeta) flag = LOWER;
-        else if (bestValue <= origAlpha) flag = UPPER;
-        else flag = EXACT;
-        transTable[sig] = {bestValue, depth, flag};
+        // Store the best score in the transposition table
+        Bound flag = Bound::EXACT;
+        if (best <= origAlpha) flag = Bound::UPPER;
+        else if (best >= origBeta) flag = Bound::LOWER;
+        tt[sig] = {best, depth, flag};
 
-        return bestValue;
+        return best;
     }
 
 public:
-    Board getBestMove(const Board &state,
-                      const std::chrono::milliseconds timeLimit,
-                      const int depthLimit) const {
-        auto startTime = std::chrono::steady_clock::now();
+    Board getBestMove(const Board &state, std::chrono::milliseconds timeLimit, int depthLimit) const {
+        SearchContext ctx{std::chrono::steady_clock::now(), timeLimit};
 
-        std::vector<Board> successors = AtariGo::generateSuccessors(state);
-        if (successors.empty()) {
-            std::cerr << "Warning: No successors generated from the current state." << std::endl;
+        std::vector<Board> succ = AtariGo::generateSuccessors(state);
+        if (succ.empty()) {
+            std::cerr << "Warning: No successors generated from the current state.\n";
             return state;
         }
+        if (succ.size() == 1) return succ[0];
 
-        if (successors.size() == 1) {
-            std::cout << "Only one possible move." << std::endl;
-            return successors[0];
-        }
+        tt.clear();
+        int overallBestScore = 0;
+        std::vector<int> overallBestIdx;
 
-        int overallBestScore;
-        std::vector<int> overallBestIndices;
-        int deepestCompletedDepth = 0;
+        for (int depth = 1; depth <= depthLimit && !ctx.timedOut; ++depth) {
+            int bestScore = (state.getPlayerToMove() == BLACK) ? INF : -INF;
+            std::vector<int> bestIdx;
 
-        transTable.clear();
+            for (int i = 0; i < static_cast<int>(succ.size()) && !ctx.timedOut; ++i) {
+                int score = minimax(succ[i], depth - 1, -INF, INF, ctx);
+                if (ctx.timedOut) break;
 
-        for (int currentDepth = 1; currentDepth <= depthLimit; ++currentDepth) {
-
-            auto elapsed = std::chrono::steady_clock::now() - startTime;
-            if (elapsed >= timeLimit) {
-                std::cout << "Time limit reached. Stopping search." << std::endl;
-                break;
-            }
-
-            int bestScoreThisDepth = (state.getPlayerToMove() == BLACK) ? INF : -INF;
-            std::vector<int> bestIndicesThisDepth;
-
-            try {
-                for (int i = 0; i < (int)successors.size(); ++i) {
-                    Board &succ = successors[i];
-                    int score = minimax(succ,
-                                        currentDepth - 1,
-                                        -INF, INF,
-                                        startTime, timeLimit);
-                    if (state.getPlayerToMove() == BLACK) {
-                        if (score < bestScoreThisDepth) {
-                            bestScoreThisDepth = score;
-                            bestIndicesThisDepth = {i};
-                        } else if (score == bestScoreThisDepth) {
-                            bestIndicesThisDepth.push_back(i);
-                        }
-                    } else {
-                        if (score > bestScoreThisDepth) {
-                            bestScoreThisDepth = score;
-                            bestIndicesThisDepth = {i};
-                        } else if (score == bestScoreThisDepth) {
-                            bestIndicesThisDepth.push_back(i);
-                        }
-                    }
+                if (state.getPlayerToMove() == BLACK) {
+                    if (score < bestScore) {
+                        bestScore = score;
+                        bestIdx = {i};
+                    } else if (score == bestScore) bestIdx.push_back(i);
+                } else {
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestIdx = {i};
+                    } else if (score == bestScore) bestIdx.push_back(i);
                 }
-            } catch (TimeUpException &) {
-                std::cout << "Time limit reached during depth " << currentDepth
-                          << ". Using results from depth " << deepestCompletedDepth << "." << std::endl;
-                break;
             }
 
-            auto elapsedTime = std::chrono::steady_clock::now() - startTime;
-            if (!bestIndicesThisDepth.empty()) {
-                overallBestScore = bestScoreThisDepth;
-                overallBestIndices = bestIndicesThisDepth;
-                deepestCompletedDepth = currentDepth;
-                std::cout << "Completed depth " << currentDepth
+            if (!ctx.timedOut && !bestIdx.empty()) {
+                overallBestScore = bestScore;
+                overallBestIdx = bestIdx;
+
+                auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::steady_clock::now() - ctx.start).count();
+
+                std::cout << "Completed depth " << depth
                         << ". Best score: " << overallBestScore
-                        << ". Candidates: " << overallBestIndices.size()
-                        << ". Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count() << " ms" << std::endl;
-            } else {
-                std::cerr << "Warning: No best move found at depth " << currentDepth << std::endl;
-                break;
-            }
+                        << ". Candidates: " << bestIdx.size()
+                        << ". Time: " << elapsedMs << " ms\n";
 
-            if (abs(overallBestScore) >= WIN) {
-                std::cout << "Found terminal score (" << overallBestScore << ") at depth " << currentDepth << ". Stopping early." << std::endl;
-                break;
+                if (std::abs(overallBestScore) >= WIN) break;
             }
         }
 
-        if (overallBestIndices.empty()) {
-            std::cerr << "Error: No best move identified after search. Returning first successor." << std::endl;
-            return successors.empty() ? state : successors[0];
+        if (overallBestIdx.empty()) {
+            std::cerr << "Error: No best move identified after search. Returning first successor.\n";
+            return succ[0];
         }
 
-        // Randomly select among the best
         static std::mt19937_64 rng{std::random_device{}()};
-        std::uniform_int_distribution<int> dist(0, overallBestIndices.size() - 1);
-        return successors[overallBestIndices[dist(rng)]];
+        std::uniform_int_distribution<int> dist(0, overallBestIdx.size() - 1);
+        return succ[overallBestIdx[dist(rng)]];
     }
 };
