@@ -5,6 +5,7 @@
 #include "Board.h"
 #include "MiniMax.cpp"
 #include "Globals.h"
+#include "Masks.h"
 
 struct BoardParseResult {
     Board board;
