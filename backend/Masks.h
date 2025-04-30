@@ -32,12 +32,27 @@
 #ifndef NEIGHBOR_MASKS_H
 #define NEIGHBOR_MASKS_H
 
+#include <iostream>
+
 #include "Globals.h"
 
+inline void printMask(Bitboard128 mask) {
+    for (int row = 0; row < BOARD_EDGE; ++row) {
+        for (int col = 0; col < BOARD_EDGE; ++col) {
+            char c = (mask & (ONE_BIT << (row * BOARD_EDGE + col))) ? '1' : '0';
+            std::cout << c << " ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "\n";
+}
+
 // Precomputed orthogonal neighbor masks for each square on the board
-inline Bitboard128 ORTH_MASK[BOARD_SIZE];
+inline Bitboard128 NEIGHBOR_MASK[BOARD_SIZE];
+inline bool neighborMasksInitialized = false;
 
 inline void initNeighborMasks() {
+    if (neighborMasksInitialized) return; // Avoid re-initialization
     for (int pos = 0; pos < BOARD_SIZE; ++pos) {
         int row = pos / BOARD_EDGE; // 0 = top row, BOARD_EDGE−1 = bottom row
         int col = pos % BOARD_EDGE; // 0 = leftmost column, BOARD_EDGE−1 = rightmost
@@ -65,8 +80,36 @@ inline void initNeighborMasks() {
         }
 
         // Store the combined mask of all orthogonal neighbors for this square
-        ORTH_MASK[pos] = m;
+        NEIGHBOR_MASK[pos] = m;
+        neighborMasksInitialized = true;
     }
 }
+
+// Precomputed file masks for leftmost (A) and rightmost (I) columns
+
+//  100 ... 0
+//  100 ... 0
+//  100 ... 0
+//      ...
+inline Bitboard128 FIRST_COLUMN_MASK = []() {
+    Bitboard128 mask = 0;
+    for (int row = 0; row < BOARD_EDGE; ++row)
+        mask |= (ONE_BIT << (row * BOARD_EDGE + 0));
+    return mask;
+}();
+
+//  0 ... 001
+//  0 ... 001
+//  0 ... 001
+//    ...
+inline Bitboard128 LAST_COLUMN_MASK = []() {
+    Bitboard128 mask = 0;
+    for (int row = 0; row < BOARD_EDGE; ++row)
+        mask |= (ONE_BIT << (row * BOARD_EDGE + BOARD_EDGE - 1));
+    return mask;
+}();
+
+inline Bitboard128 FULL_BOARD_MASK =  ~static_cast<Bitboard128>(0) >> (128 - BOARD_SIZE);
+
 
 #endif

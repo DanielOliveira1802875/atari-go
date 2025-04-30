@@ -7,7 +7,7 @@
 #include "AtariGo.h"
 #include "Globals.h"
 #include "MiniMax.cpp"
-#include "NeighborMasks.h"
+#include "Masks.h"
 #include "Zobrist.h"
 
 class Game {
@@ -23,17 +23,17 @@ public:
         board.setStone(4, 5);
         AtariGo::calculateHeuristic(board);
 
-        const Player human = BLACK;
-        const Player computer = WHITE;
+        constexpr Player human = BLACK;
+        constexpr Player computer = WHITE;
         Player turn = board.getPlayerToMove();
 
-        atariGo.print(board);
+        AtariGo::print(board);
 
         while (true) {
             AtariGo::calculateHeuristic(board);
-            atariGo.print(board);
+            AtariGo::print(board);
 
-            if (atariGo.isTerminal(board)) {
+            if (AtariGo::isTerminal(board)) {
                 std::cout << "Game over. Terminal state reached.\n";
                 std::cout << (board.getHeuristic() > 0 ? "WHITE" : "BLACK") << " wins!\n";
                 break;

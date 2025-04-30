@@ -1,5 +1,5 @@
 #include "AtariGo.h"
-#include "NeighborMasks.h"
+#include "Masks.h"
 #include <iostream>
 #include <algorithm>
 #include <cmath>
@@ -9,137 +9,135 @@
 #include "BBUtils.h"
 
 
-//Check if a given square has any occupied orthogonal neighbors.
-inline bool hasOccupiedNeighbor(const Board& b, int pos)
-{
-    // Combine black and white occupancy into a single bitboard
-    Bitboard128 occupancy = b.getBlackBits() | b.getWhiteBits();
+Bitboard128 AtariGo::getNeighbourBits(Bitboard128 bitboard) {
+    // North: shift up BOARD_EDGE rows, then clamp off any bits > BOARD_SIZE-1
+    const Bitboard128 north = (bitboard << BOARD_EDGE) & FULL_BOARD_MASK;
 
-    // Gets the precomputed mask of orthogonal neighbors for `pos`
-    Bitboard128 neighborMask = ORTH_MASK[pos];
+    // South: shift down BOARD_EDGE rows (shifting in zeros on top)
+    const Bitboard128 south = bitboard >> BOARD_EDGE;
 
-    // AND the neighbor mask with the occupancy bitboard:
-    // any set bit in common means an occupied neighbor.
-    return (neighborMask & occupancy) != 0;
+    // East/West: mask *before* shifting to prevent wrap-around
+    const Bitboard128 east  = (bitboard & ~LAST_COLUMN_MASK)  << 1;
+    const Bitboard128 west  = (bitboard & ~FIRST_COLUMN_MASK) >> 1;
+
+    // Combine
+    return north | south | east | west;
 }
 
 std::vector<Board> AtariGo::generateSuccessors(const Board& state) {
-    std::vector<std::pair<int, Board>> scoredSuccessors;
-    std::vector<Board> successors;
-	successors.reserve(BOARD_SIZE);
+    std::vector<std::pair<int, Board>> scored;
+    scored.reserve(BOARD_SIZE);
 
-    // If it's the first turn, place a stone in the center of the board.
+    // Special-case: first move in center
     if (state.getTurn() == 1) {
-        Board successor = state;
-        const unsigned char randX = 4 + rand() % 2;
-        const unsigned char randY = 4 + rand() % 2;
-        successor.setStone(randX, randY);
-        successors.push_back(successor);
-        return successors;
+        Board center = state;
+        center.setStone(BOARD_EDGE / 2, BOARD_EDGE / 2);
+        return { center };
     }
 
-    // Generate successors by placing stones in empty positions with occupied neighbors.
-    for (int pos = 0; pos < BOARD_SIZE; ++pos) {
-        if (!state.isEmpty(pos) || !hasOccupiedNeighbor(state, pos)) continue;
+    const Bitboard128 occupiedBits = state.getBlackBits() | state.getWhiteBits();
 
-        Board successor = state;
-        successor.setStone(pos);
+    const Bitboard128 adjacentBits = getNeighbourBits(occupiedBits);
 
-        calculateHeuristic(successor);
-		int score = successor.getHeuristic();
-        scoredSuccessors.emplace_back(score, successor);
+    Bitboard128 successorBits = adjacentBits & ~occupiedBits;
+
+    while (successorBits) {
+        const int pos = BBUtils::popLSB(successorBits);
+        Board child = state;
+        child.setStone(pos);
+        calculateHeuristic(child);
+        scored.emplace_back(child.getHeuristic(), child);
     }
 
-    if (state.getPlayerToMove() == BLACK) { // Black wants to MINIMIZE the score, so sort in ascending order.
-        std::sort(scoredSuccessors.begin(), scoredSuccessors.end(),
-            [](const std::pair<int, Board>& a, const std::pair<int, Board>& b) {
-                return a.first < b.first;
-            });
-    }
-    else { // White wants to MAXIMIZE the score, so sort in descending order.
-        std::sort(scoredSuccessors.begin(), scoredSuccessors.end(),
-            [](const std::pair<int, Board>& a, const std::pair<int, Board>& b) {
-                return a.first > b.first;
-            });
+    if (state.getPlayerToMove() == BLACK) {
+        std::sort(scored.begin(), scored.end(),
+                  [](auto &a, auto &b) { return a.first < b.first; });
+    } else {
+        std::sort(scored.begin(), scored.end(),
+                  [](auto &a, auto &b) { return a.first > b.first; });
     }
 
-    // Extract the sorted boards from the pairs.
-	for (const auto& pair : scoredSuccessors) successors.push_back(pair.second);
+    std::vector<Board> successors;
+    successors.reserve(scored.size());
+    for (auto &p : scored)
+        successors.push_back(p.second);
 
     return successors;
 }
 
 void AtariGo::computeLibertiesHeuristic(
-        Board& state,
-        int& minBlackLib, int& minWhiteLib,
-        int& cntMinB,     int& cntMinW,
-        int& totalB,      int& totalW )
-{
-    Bitboard128 blackBoard = state.getBlackBits();
-    Bitboard128 whiteBoard = state.getWhiteBits();
-    const Bitboard128 occupationBoard = blackBoard | whiteBoard;
+    const Board &state,
+    int &minBlackLib,        // out: smallest number of liberties in any black group
+    int &minWhiteLib,        // out: same for white
+    int &countMinBLibGroups, // out: how many black groups hit that minimum
+    int &countMinWLibGroups, // out: how many white groups hit that minimum
+    int &totalBlackLib,      // out: sum of liberties over all black groups
+    int &totalWhiteLib       // out: sum of liberties over all white groups
+) {
+    // Cache bitboards
+    const Bitboard128 blackBitboard = state.getBlackBits();
+    const Bitboard128 whiteBitboard = state.getWhiteBits();
+    const Bitboard128 occupiedBits = blackBitboard | whiteBitboard;
 
-    // process both colours
-    auto flood = [&](Bitboard128& pool, bool isBlack)
-    {
-        bool visited[BOARD_SIZE] = {};
+    // Initialize accumulators
+    minBlackLib      = BOARD_SIZE;
+    minWhiteLib      = BOARD_SIZE;
+    countMinBLibGroups = 0;
+    countMinWLibGroups = 0;
+    totalBlackLib    = 0;
+    totalWhiteLib    = 0;
 
-        while (pool)  // unvisited stones remain
-        {
-            // pop one stone index from pool
-            int seed = BBUtils::popLSB(pool);
-            if (visited[seed]) continue;
+    // Helper lambda to flood each color’s groups
+    auto floodColor = [&](Bitboard128 pool, bool isBlack) {
+        // Which bitboard and accumulators to use
+        const Bitboard128 stoneBits = isBlack ? blackBitboard : whiteBitboard;
+        int &minLib   = isBlack ? minBlackLib   : minWhiteLib;
+        int &countMin = isBlack ? countMinBLibGroups : countMinWLibGroups;
+        int &totalLib = isBlack ? totalBlackLib : totalWhiteLib;
 
-            unsigned char liberties = 0;
-            int stackSize = 0;
-            int stack[BOARD_SIZE];
-            stack[stackSize++] = seed;
-            visited[seed] = true;
+        // Peel off one connected component at a time
+        while (pool) {
+            // Start a new group from one seed stone
+            const int seed = BBUtils::popLSB(pool);
+            Bitboard128 group = static_cast<Bitboard128>(1) << seed;
 
-            // flood‐fill this group
-            while (stackSize)
-            {
-                int pos = stack[--stackSize];
-                Bitboard128 nbrMask = ORTH_MASK[pos];
-
-                // count liberties on empty neighbours
-                Bitboard128 libBits = nbrMask & ~occupationBoard;
-                liberties += BBUtils::bitCount(libBits);
-
-                // push same-colour neighbours that aren’t visited yet
-                Bitboard128 same = nbrMask & (isBlack
-                    ? state.getBlackBits()
-                    : state.getWhiteBits());
-
-                while (same)
-                {
-                    int n = BBUtils::popLSB(same);
-                    if (!visited[n])
-                    {
-                        visited[n] = true;
-                        stack[stackSize++] = n;
-                    }
-                }
+            // Grow the group by adding any same-color neighbors
+            while (true) {
+                const Bitboard128 newStones =
+                    getNeighbourBits(group)  // all nbrs of current group bits
+                    & stoneBits              // only same-color stones
+                    & ~group;                // only those not already in group
+                if (!newStones) break;
+                group |= newStones;
             }
 
-            // update global stats
-            if (isBlack) {
-                totalB += liberties;
-                if (liberties < minBlackLib) { minBlackLib = liberties; cntMinB = 1; }
-                else if (liberties == minBlackLib) ++cntMinB;
-            } else {
-                totalW += liberties;
-                if (liberties < minWhiteLib) { minWhiteLib = liberties; cntMinW = 1; }
-                else if (liberties == minWhiteLib) ++cntMinW;
+            // Remove entire group from pool so we don’t revisit it
+            pool &= ~group;
+
+            // Compute liberties in one shot
+            const Bitboard128 libsBB =
+                getNeighbourBits(group)     // all neighbors of the group
+                & ~occupiedBits;            // only empty squares
+            const int libs = BBUtils::bitCount(libsBB);
+
+            // Update totals and minima
+            totalLib += libs;
+            if (libs < minLib) {
+                minLib = libs;
+                countMin = 1;
+            } else if (libs == minLib) {
+                ++countMin;
             }
         }
     };
 
-    flood(blackBoard, true);
-    flood(whiteBoard, false);
+    // Flood both colors
+    floodColor(blackBitboard, true);
+    floodColor(whiteBitboard, false);
 }
 
-void AtariGo::calculateHeuristic(Board& state) {
+
+void AtariGo::calculateHeuristic(Board &state) {
     // Check if heuristic is already calculated to avoid recomputation
     if (state.getIsHeuristicCalculated()) return;
 
@@ -153,21 +151,21 @@ void AtariGo::calculateHeuristic(Board& state) {
 
     int score = 0;
 
-    Player nextMove = state.getPlayerToMove();
-    Player thisMove = nextMove == BLACK ? WHITE : BLACK;
+    const Player nextMove = state.getPlayerToMove();
+    const Player thisMove = nextMove == BLACK ? WHITE : BLACK;
 
     // If one color has no liberties, there is a win
     if (minW == 0 && minB > 0) score = -WIN;
-    else if (minB == 0 && minW > 0)  score = WIN;
+    else if (minB == 0 && minW > 0) score = WIN;
     else if (minB == 0 && minW == 0) score = thisMove == BLACK ? -WIN : WIN;
 
     else {
         // penalize if one color has only one liberty
-        if (minB == 1 && minW > 1 ) score =  ATARI_PENALTY * countB;
-        else if (minW == 1 && minB > 1 ) score =  -ATARI_PENALTY * countW;
+        if (minB == 1 && minW > 1) score = ATARI_PENALTY * countB;
+        else if (minW == 1 && minB > 1) score = -ATARI_PENALTY * countW;
 
         // penalize if one color has two liberties
-        else if (minB == 2 && minW > 2) score =  NEAR_ATARI_PENALTY;
+        else if (minB == 2 && minW > 2) score = NEAR_ATARI_PENALTY;
         else if (minW == 2 && minB > 2) score = -NEAR_ATARI_PENALTY;
 
         // add some weight to the difference in liberties
@@ -179,13 +177,12 @@ void AtariGo::calculateHeuristic(Board& state) {
 }
 
 
-
-bool AtariGo::isTerminal(Board& state) {
+bool AtariGo::isTerminal(Board &state) {
     const int score = state.getHeuristic();
     return score >= WIN || score <= -WIN;
 }
 
-void AtariGo::print(Board& board) {
+void AtariGo::print(Board &board) {
     std::cout << "  ";
     for (int col = 0; col < BOARD_EDGE; ++col) {
         std::cout << (col + 1) << " ";

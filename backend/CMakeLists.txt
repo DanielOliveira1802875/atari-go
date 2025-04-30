@@ -48,9 +48,9 @@ add_executable(atari_go
         AtariGo.cpp
         Board.h
         MiniMax.cpp
-        NeighborMasks.h
+        Masks.h
         Zobrist.h
-        BitboardHelper.h
+        BBUtils.h
 )
 
 # Include directories

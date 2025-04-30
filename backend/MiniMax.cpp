@@ -18,14 +18,15 @@ private:
     }
 
     int minimax(Board &state, int depth, int alpha, int beta,
-                Player current, Player maximize, bool &time_up,
+                bool &time_up,
                 const std::chrono::steady_clock::time_point &startTime,
                 const std::chrono::milliseconds &timeLimit) const {
 
+        const Player current = state.getPlayerToMove();
         // --- Time Check ---
         if (time_up || std::chrono::steady_clock::now() - startTime >= timeLimit) {
             time_up = true;
-            return 0;
+            return (current == WHITE ? alpha : beta);
         }
 
         uint64_t sig = state.getSignature();
@@ -56,19 +57,19 @@ private:
         if (successors.empty())
             return state.getHeuristic();
 
-        int origAlpha = alpha, origBeta = beta;
-        int bestValue = (current == maximize) ? -INF : INF;
+        const int origAlpha = alpha;
+        const int origBeta = beta;
+        int bestValue = (current == WHITE) ? -INF : INF;
 
         for (auto &s: successors) {
             int eval = minimax(
                 s, depth - 1,
                 alpha, beta,
-                getOpponent(current), maximize,
                 time_up, startTime, timeLimit
             );
             if (time_up) return 0;
 
-            if (current == maximize) {
+            if (current == WHITE) {
                 bestValue = std::max(bestValue, eval);
                 alpha = std::max(alpha, bestValue);
             } else {
@@ -91,7 +92,7 @@ private:
     }
 
 public:
-    Board getBestMove(const Board &state, std::chrono::milliseconds timeLimit, int depthLimit) const {
+    Board getBestMove(const Board &state, const std::chrono::milliseconds timeLimit, const int depthLimit) const {
         auto startTime = std::chrono::steady_clock::now();
 
         std::vector<Board> successors = AtariGo::generateSuccessors(state);
@@ -104,7 +105,7 @@ public:
             return successors[0];
         }
 
-        int overallBestScore = (state.getPlayerToMove()) ? INF : -INF;
+        int overallBestScore = (state.getPlayerToMove() == BLACK) ? INF : -INF;
         int overallBestTurn = INF;
         std::vector<int> overallBestIndices;
         int deepestCompletedDepth = 0;
@@ -129,16 +130,14 @@ public:
 
             // Evaluate successors at the current depth
             for (int i = 0; i < (int) successors.size(); ++i) {
-                Board &succ = successors[i];
+                Board &successor = successors[i];
 
-                int score = minimax(succ, currentDepth - 1, -INF, INF,
-                                    succ.getPlayerToMove(),
-                                    WHITE,
+                int score = minimax(successor, currentDepth - 1, -INF, INF,
                                     time_up_for_this_depth, startTime, timeLimit);
 
                 if (time_up_for_this_depth) break;
 
-                int turn = succ.getTurn();
+                int turn = successor.getTurn();
 
                 bool isBetter;
                 if (state.getPlayerToMove() == BLACK) isBetter = score < bestScoreThisDepth;
@@ -200,7 +199,7 @@ public:
         // Randomly select among the best moves found at the deepest completed depth
         static std::mt19937_64 rng{std::random_device{}()};
         std::uniform_int_distribution<int> dist(0, overallBestIndices.size() - 1);
-        int chosenIndex = overallBestIndices[dist(rng)];
+        const int chosenIndex = overallBestIndices[dist(rng)];
 
         return successors[chosenIndex];
     }

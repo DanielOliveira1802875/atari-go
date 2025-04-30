@@ -15,13 +15,13 @@ public:
     }
 
     /// Tests whether the bit at `pos` in `bb` is set (1).
-    static inline bool testBit(Bitboard128 b, int pos) noexcept {
+    static inline bool testBit(const Bitboard128 b, const int pos) noexcept {
         assert(pos >= 0 && pos < 128);
         return (b & (ONE_BIT << pos)) != 0;
     }
 
     /// Returns index [0..63] of the least-significant set bit in x.
-    static inline int getLSBIndex(uint64_t x) noexcept {
+    static inline int getLSBIndex(const uint64_t x) noexcept {
         assert(x != 0);
         // __builtin_ctzll is a GCC/Clang built-in function that counts the number of
         // trailing zeros in the binary representation of its argument.
@@ -29,24 +29,24 @@ public:
     }
 
     /// Returns index [0..127] of the least-significant set bit in b.
-    static inline int getLSBIndex(Bitboard128 b) noexcept {
+    static inline int getLSBIndex(const Bitboard128 b) noexcept {
         assert(b != 0);
         // Since __builtin_ctzll only works on 64-bit integers, we need to check
         // if the least significant bit is in the lower or upper 64 bits of b.
-        auto lo = static_cast<uint64_t>(b);
-        if (lo) {
+        const auto lo = static_cast<uint64_t>(b);
+        if (lo != 0) {
             // LSB is in lower 64 bits
             return __builtin_ctzll(lo);
         }
         // LSB is in upper 64 bits; shift down and add 64
-        auto hi = static_cast<uint64_t>(b >> 64);
+        const auto hi = static_cast<uint64_t>(b >> 64);
         return __builtin_ctzll(hi) + 64;
     }
 
     /// Clears and returns the index of the least-significant set bit in b.
     static inline int popLSB(Bitboard128 &b) noexcept {
         assert(b != 0);
-        int idx = getLSBIndex(b);
+        const int idx = getLSBIndex(b);
         clearLSB(b);
         return idx;
     }

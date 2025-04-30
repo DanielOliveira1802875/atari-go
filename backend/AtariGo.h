@@ -6,11 +6,12 @@
 
 class AtariGo {
 private:
-    static void computeLibertiesHeuristic(Board& state, int& minBlackLib, int& minWhiteLib, int& countMinBLibGroups, int& countMinWLibGroups, int& totalBlackLib, int& totalWhiteLib) ;
+    static void computeLibertiesHeuristic(const Board& state, int& minBlackLib, int& minWhiteLib, int& countMinBLibGroups, int& countMinWLibGroups, int& totalBlackLib, int& totalWhiteLib) ;
 public:
     static void calculateHeuristic(Board& state);
     [[nodiscard]] static std::vector<Board> generateSuccessors(const Board& state) ;
     [[nodiscard]] static bool isTerminal(Board& state);
+    [[nodiscard]] static Bitboard128 getNeighbourBits(Bitboard128 bitboard);
     static void print(Board& board);
 };
 

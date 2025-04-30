@@ -5,8 +5,6 @@
 #include "Board.h"
 #include "MiniMax.cpp"
 #include "Globals.h"
-#include "NeighborMasks.h"
-#include "Zobrist.h"
 
 struct BoardParseResult {
     Board board;
@@ -68,7 +66,7 @@ BoardParseResult parseBoard(const char* boardStr) {
 
 std::string boardToString(const Board& board) {
     std::string result;
-    result.reserve(81);
+    result.reserve(BOARD_SIZE);
     for (int i = 0; i < BOARD_SIZE; i++) {
         if (board.isBlack(i)) result += 'B';
         else if (board.isWhite(i)) result += 'W';

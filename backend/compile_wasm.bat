@@ -17,10 +17,11 @@ em++ -std=c++17 -O3 -flto -ffast-math -msimd128 ^
   -s EXPORTED_FUNCTIONS="['_getBestMove']" ^
   -s EXPORTED_RUNTIME_METHODS="['ccall', 'cwrap', 'lengthBytesUTF8']" ^
   -s ALLOW_MEMORY_GROWTH=1 ^
-  -s ENVIRONMENT="web" ^
+  -s ENVIRONMENT="web,worker" ^
   -s MALLOC="emmalloc" ^
   -s ASSERTIONS=0 ^
   -s AGGRESSIVE_VARIABLE_ELIMINATION=1 ^
+  -s WASM_BIGINT=1 ^
   --closure 1
 
 if %ERRORLEVEL% NEQ 0 (
