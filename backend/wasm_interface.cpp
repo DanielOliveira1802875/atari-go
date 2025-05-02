@@ -15,7 +15,7 @@ struct BoardParseResult {
 
 BoardParseResult parseBoard(const char* boardStr) {
     BoardParseResult result;
-    result.timeLimit = 1000; // Default time limit in ms
+    result.timeLimit = 5000; // Default time limit in ms
     result.maxDepth = 64; // Default max depth
 
     std::string input(boardStr);
@@ -61,6 +61,13 @@ BoardParseResult parseBoard(const char* boardStr) {
         if (c == 'b') result.board.setBlack(i);
         else if (c == 'w') result.board.setWhite(i);
     }
+    AtariGo::calculateHeuristic(result.board);
+
+    std::cerr << "Parsed time limit: " << result.timeLimit << "ms\n";
+    std::cerr << "Parsed max depth: " << result.maxDepth << "\n";
+    std::cerr << "Turn: " << static_cast<int>(result.board.getTurn()) << " " << (result.board.getPlayerToMove() == BLACK ? "BLACK" : "WHITE") << "\n";
+    std::cerr << "Parsed board state:\n";
+    AtariGo::print(result.board);
 
     return result;
 }
@@ -98,8 +105,32 @@ extern "C" {
         std::string result = boardToString(bestMove);
         if (bestMove.getHeuristic() == WIN) result += ";WHITE";
         else if (bestMove.getHeuristic() == -WIN) result += ";BLACK";
+        else result += ";";
+        result += ";" + std::to_string(bestMove.getHeuristic());
         std::cerr << "Best move board state: " << result << "\n";
 
+        char* ret = new char[result.size() + 1];
+        std::strcpy(ret, result.c_str());
+        return ret;
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    const char* getSuccessors(const char* boardStr) {
+        std::cerr << "Parsing board: " << boardStr << "\n";
+        BoardParseResult parseResult = parseBoard(boardStr);
+        std::cerr << "Board parsed. Player to play: "
+            << (parseResult.board.getPlayerToMove() == BLACK ? "BLACK" : "WHITE")
+            << " with time limit: " << parseResult.timeLimit << "ms\n";
+        const auto successors = AtariGo::generateSuccessors(parseResult.board);
+        std::cerr << "Successors generated.\n";
+        std::string result;
+        for (const auto& successor : successors) {
+            result += boardToString(successor) + ";";
+        }
+        if (!result.empty()) {
+            result.pop_back(); // Remove the last semicolon
+        }
+        std::cerr << "Successors string: " << result << "\n";
         char* ret = new char[result.size() + 1];
         std::strcpy(ret, result.c_str());
         return ret;

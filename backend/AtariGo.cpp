@@ -8,22 +8,6 @@
 
 #include "BBUtils.h"
 
-
-Bitboard128 AtariGo::getNeighbourBits(Bitboard128 bitboard) {
-    // North: shift up BOARD_EDGE rows, then clamp off any bits > BOARD_SIZE-1
-    const Bitboard128 north = (bitboard << BOARD_EDGE) & FULL_BOARD_MASK;
-
-    // South: shift down BOARD_EDGE rows (shifting in zeros on top)
-    const Bitboard128 south = bitboard >> BOARD_EDGE;
-
-    // East/West: mask *before* shifting to prevent wrap-around
-    const Bitboard128 east  = (bitboard & ~LAST_COLUMN_MASK)  << 1;
-    const Bitboard128 west  = (bitboard & ~FIRST_COLUMN_MASK) >> 1;
-
-    // Combine
-    return north | south | east | west;
-}
-
 std::vector<Board> AtariGo::generateSuccessors(const Board& state) {
     std::vector<std::pair<int, Board>> scored;
     scored.reserve(BOARD_SIZE);
@@ -32,17 +16,17 @@ std::vector<Board> AtariGo::generateSuccessors(const Board& state) {
     if (state.getTurn() == 1) {
         Board center = state;
         center.setStone(BOARD_EDGE / 2, BOARD_EDGE / 2);
+        calculateHeuristic(center);
         return { center };
     }
 
     const Bitboard128 occupiedBits = state.getBlackBits() | state.getWhiteBits();
 
-    const Bitboard128 adjacentBits = getNeighbourBits(occupiedBits);
+    Bitboard128 successorBits = getNeighbourBits(occupiedBits);
 
-    Bitboard128 successorBits = adjacentBits & ~occupiedBits;
 
     while (successorBits) {
-        const int pos = BBUtils::popLSB(successorBits);
+        const int pos = popLSB(successorBits);
         Board child = state;
         child.setStone(pos);
         calculateHeuristic(child);
@@ -98,15 +82,14 @@ void AtariGo::computeLibertiesHeuristic(
         // Peel off one connected component at a time
         while (pool) {
             // Start a new group from one seed stone
-            const int seed = BBUtils::popLSB(pool);
+            const int seed = popLSB(pool);
             Bitboard128 group = static_cast<Bitboard128>(1) << seed;
 
             // Grow the group by adding any same-color neighbors
             while (true) {
                 const Bitboard128 newStones =
                     getNeighbourBits(group)  // all nbrs of current group bits
-                    & stoneBits              // only same-color stones
-                    & ~group;                // only those not already in group
+                    & stoneBits;              // only same-color stones
                 if (!newStones) break;
                 group |= newStones;
             }
@@ -118,7 +101,7 @@ void AtariGo::computeLibertiesHeuristic(
             const Bitboard128 libsBB =
                 getNeighbourBits(group)     // all neighbors of the group
                 & ~occupiedBits;            // only empty squares
-            const int libs = BBUtils::bitCount(libsBB);
+            const int libs = bitCount(libsBB);
 
             // Update totals and minima
             totalLib += libs;
@@ -169,8 +152,24 @@ void AtariGo::calculateHeuristic(Board &state) {
         else if (minW == 2 && minB > 2) score = -NEAR_ATARI_PENALTY;
 
         // add some weight to the difference in liberties
-        score += minB - minW;
+        score += (minB - minW) * 4;
         score += totalWhiteLib - totalBlackLib;
+
+        /*auto blackBits = state.getBlackBits();
+        auto whiteBits = state.getWhiteBits();
+
+        auto blackBitsOnEdge0 = bitCount(blackBits & EDGE_MASK_0);
+        auto whiteBitsOnEdge0 = bitCount(whiteBits & EDGE_MASK_0);
+
+        auto blackBitsOnEdge1 = bitCount(blackBits & EDGE_MASK_1);
+        auto whiteBitsOnEdge1 = bitCount(whiteBits & EDGE_MASK_1);
+
+        auto blackBitsOnEdge2 = bitCount(blackBits & EDGE_MASK_2);
+        auto whiteBitsOnEdge2 = bitCount(whiteBits & EDGE_MASK_2);
+
+        score += (blackBitsOnEdge0 - whiteBitsOnEdge0) * 3;
+        score += (blackBitsOnEdge1 - whiteBitsOnEdge1) * 2;
+        score += (blackBitsOnEdge2 - whiteBitsOnEdge2) * 1;*/
     }
 
     state.setHeuristic(score);

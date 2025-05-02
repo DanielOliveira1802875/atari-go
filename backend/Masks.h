@@ -54,8 +54,8 @@ inline bool neighborMasksInitialized = false;
 inline void initNeighborMasks() {
     if (neighborMasksInitialized) return; // Avoid re-initialization
     for (int pos = 0; pos < BOARD_SIZE; ++pos) {
-        int row = pos / BOARD_EDGE; // 0 = top row, BOARD_EDGE−1 = bottom row
-        int col = pos % BOARD_EDGE; // 0 = leftmost column, BOARD_EDGE−1 = rightmost
+        const int row = pos / BOARD_EDGE; // 0 = top row, BOARD_EDGE−1 = bottom row
+        const int col = pos % BOARD_EDGE; // 0 = leftmost column, BOARD_EDGE−1 = rightmost
 
         Bitboard128 m = 0; // start with empty mask
 
@@ -111,5 +111,41 @@ inline Bitboard128 LAST_COLUMN_MASK = []() {
 
 inline Bitboard128 FULL_BOARD_MASK =  ~static_cast<Bitboard128>(0) >> (128 - BOARD_SIZE);
 
+inline Bitboard128 getNeighbourBits(Bitboard128 bitboard) {
+    // North: shift up BOARD_EDGE rows, then clamp off any bits > BOARD_SIZE-1
+    const Bitboard128 north = (bitboard << BOARD_EDGE) & FULL_BOARD_MASK;
+
+    // South: shift down BOARD_EDGE rows (shifting in zeros on top)
+    const Bitboard128 south = bitboard >> BOARD_EDGE;
+
+    // East/West: mask *before* shifting to prevent wrap-around
+    const Bitboard128 east  = (bitboard & ~LAST_COLUMN_MASK)  << 1;
+    const Bitboard128 west  = (bitboard & ~FIRST_COLUMN_MASK) >> 1;
+
+    // Combine
+    return (north | south | east | west) & ~bitboard;
+}
+
+inline Bitboard128 EDGE_MASK_0 = []() {
+    Bitboard128 mask = 0;
+    for (int i = 0; i < BOARD_EDGE; ++i) {
+        mask |= (ONE_BIT << i); // Top row
+        mask |= (ONE_BIT << (i * BOARD_EDGE)); // Left column
+        mask |= (ONE_BIT << ((BOARD_EDGE - 1) * BOARD_EDGE + i)); // Bottom row
+        mask |= (ONE_BIT << (i * BOARD_EDGE + BOARD_EDGE - 1)); // Right column
+    }
+    return mask;
+}();
+
+inline Bitboard128 EDGE_MASK_1 = []() {
+    return getNeighbourBits(EDGE_MASK_0);
+}();
+
+
+inline Bitboard128 EDGE_MASK_2 = []() {
+    Bitboard128 mask = getNeighbourBits(EDGE_MASK_1 | EDGE_MASK_0);
+    printMask(mask);
+    return mask;
+}();
 
 #endif

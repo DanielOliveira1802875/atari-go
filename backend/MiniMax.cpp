@@ -5,11 +5,18 @@
 #include "unordered_dense.h"
 #include "AtariGo.h"
 
-namespace {
-    inline Player opponent(Player p) { return p == BLACK ? WHITE : BLACK; }
-    constexpr int INF = WIN * 2;
-    constexpr uint64_t CHECK_INTERVAL = 2048;
+
+inline Player opponent(Player p) { return p == BLACK ? WHITE : BLACK; }
+constexpr int INF = WIN * 2;
+constexpr uint64_t CHECK_INTERVAL = 2048;
+
+inline int distanceAwareScore(int raw, int ply) {
+    // raw ==  ±WIN  for true terminal wins/losses
+    if (raw >=  WIN) return raw - ply;   // sooner win  -> bigger value
+    if (raw <= -WIN) return raw + ply;   // later loss -> less negative
+    return raw;                          // heuristic, leave untouched
 }
+
 
 class MiniMax {
 private:
@@ -25,7 +32,7 @@ private:
         uint64_t nodeCount = 0;
     };
 
-    int minimax(Board &state, int depth, int alpha, int beta, SearchContext &ctx) const {
+    int minimax(Board &state, int depth, int alpha, int beta, SearchContext &ctx, int ply) const {
 
         // Check if the search has timed out
         if (ctx.timedOut) return 0;
@@ -55,7 +62,7 @@ private:
         }
 
         // Check if the game is over or if we reached the maximum depth
-        if (depth == 0 || AtariGo::isTerminal(state)) return state.getHeuristic();
+        if (depth == 0 || AtariGo::isTerminal(state))  return distanceAwareScore(state.getHeuristic(), ply);
 
         // Generate successors
         auto succ = AtariGo::generateSuccessors(state);
@@ -67,7 +74,7 @@ private:
 
         // Iterate through successors
         for (auto &child: succ) {
-            int score = minimax(child, depth - 1, alpha, beta, ctx);
+            int score = minimax(child, depth - 1, alpha, beta, ctx, ply + 1);
             if (ctx.timedOut) return 0;
 
             if (toMove == WHITE) {
@@ -93,6 +100,10 @@ public:
     Board getBestMove(const Board &state, std::chrono::milliseconds timeLimit, int depthLimit) const {
         SearchContext ctx{std::chrono::steady_clock::now(), timeLimit};
 
+        if (!state.getIsHeuristicCalculated()) {
+            throw std::runtime_error("Heuristic not calculated. Call AtariGo::calculateHeuristic() first.");
+        }
+
         std::vector<Board> succ = AtariGo::generateSuccessors(state);
         if (succ.empty()) {
             std::cerr << "Warning: No successors generated from the current state.\n";
@@ -109,7 +120,7 @@ public:
             std::vector<int> bestIdx;
 
             for (int i = 0; i < static_cast<int>(succ.size()) && !ctx.timedOut; ++i) {
-                int score = minimax(succ[i], depth - 1, -INF, INF, ctx);
+                const int score = minimax(succ[i], depth - 1, -INF, INF, ctx, 0);
                 if (ctx.timedOut) break;
 
                 if (state.getPlayerToMove() == BLACK) {
@@ -148,6 +159,7 @@ public:
 
         static std::mt19937_64 rng{std::random_device{}()};
         std::uniform_int_distribution<int> dist(0, overallBestIdx.size() - 1);
+        succ[overallBestIdx[dist(rng)]].setHeuristic(overallBestScore);
         return succ[overallBestIdx[dist(rng)]];
     }
 };

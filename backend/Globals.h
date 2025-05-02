@@ -7,9 +7,9 @@ enum Stone { Empty = 0, Black = 1, White = 2 };
 constexpr int BOARD_EDGE = 9;
 constexpr int BOARD_SIZE = BOARD_EDGE * BOARD_EDGE;
 
-constexpr int WIN = 10000;
-constexpr int ATARI_PENALTY = 200;
-constexpr int NEAR_ATARI_PENALTY = 100;
+constexpr int WIN = 1'000'000;
+constexpr int ATARI_PENALTY = 200'000;
+constexpr int NEAR_ATARI_PENALTY = 100'000;
 
 // 128-bit unsigned integer type
 using Bitboard128 = unsigned __int128;

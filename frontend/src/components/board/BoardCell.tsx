@@ -1,14 +1,15 @@
-import { TUINodePosition } from "@/components/board/Helpers.ts";
-import { TCell, TPlayer } from "@/components/board/Board.tsx";
+import { TCell, TPlayer } from "@/stores/usePreferences.ts";
+import { TUINodePosition } from "@/lib/Helpers.ts";
 
 interface UINodeProps {
   position: TUINodePosition;
   currentPlayer: TPlayer;
   takenBy: TCell;
   hideGrid?: boolean;
+  isLastMove?: boolean;
 }
 
-const UINode = (props: UINodeProps) => {
+const BoardCell = (props: UINodeProps) => {
   const { position, currentPlayer, takenBy } = props;
 
   let div1Border: string;
@@ -29,11 +30,15 @@ const UINode = (props: UINodeProps) => {
   if (takenBy != ".") stoneStyle += " opacity-100";
   else stoneStyle += " opacity-0 hover:opacity-50";
 
+  if (props.isLastMove) {
+    stoneStyle += " border-2 border-blue-500";
+  }
+
   // Adding stone styling with shadows and highlights
-  if (takenBy === "B" || currentPlayer === "B" && takenBy === ".") {
+  if (takenBy === "B" || (currentPlayer === "B" && takenBy === ".")) {
     stoneStyle += " bg-gradient-to-br from-stone-500 to-black";
     stoneStyle += " shadow-[0_2px_3px_rgba(0,0,0,0.6),inset_0_-2px_5px_rgba(0,0,0,0.8),inset_0_2px_5px_rgba(255,255,255,0.3)]";
-  } else if (takenBy === "W" || currentPlayer === "W" && takenBy === ".") {
+  } else if (takenBy === "W" || (currentPlayer === "W" && takenBy === ".")) {
     stoneStyle += " bg-gradient-to-br from-stone-100 to-stone-500";
     stoneStyle += " shadow-[0_2px_3px_rgba(0,0,0,0.4),inset_0_-2px_5px_rgba(0,0,0,0.1),inset_0_2px_5px_rgba(255,255,255,0.7)]";
   }
@@ -60,4 +65,4 @@ const UINode = (props: UINodeProps) => {
   );
 };
 
-export default UINode;
+export default BoardCell;

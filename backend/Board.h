@@ -25,14 +25,6 @@ private:
 public:
     Board() : black_board(0), white_board(0), zobrist_hash(0), turn(1), isHeuristicCalculated(false), heuristic(0) { }
 
-    Board(const Board &) = default;
-
-    Board &operator=(const Board &) = default;
-
-    Board(Board &&) = default;
-
-    Board &operator=(Board &&) = default;
-
     void setHeuristic(const int h) {
         heuristic = h;
         isHeuristicCalculated = true;
@@ -48,10 +40,10 @@ public:
 
     [[nodiscard]] Stone getStone(const int row, const int col) const { return getStone(pos_from_coord(row, col)); }
 
-    [[nodiscard]] bool isBlack(const int pos) const { return BBUtils::testBit(black_board, pos); }
-    [[nodiscard]] bool isWhite(const int pos) const { return BBUtils::testBit(white_board, pos); }
+    [[nodiscard]] bool isBlack(const int pos) const { return testBit(black_board, pos); }
+    [[nodiscard]] bool isWhite(const int pos) const { return testBit(white_board, pos); }
 
-    [[nodiscard]] bool isEmpty(const int pos) const { return !BBUtils::testBit(black_board | white_board, pos); }
+    [[nodiscard]] bool isEmpty(const int pos) const { return !testBit(black_board | white_board, pos); }
 
     [[nodiscard]] Stone getStone(const int pos) const {
         if (isBlack(pos)) return Black;
@@ -69,7 +61,7 @@ public:
 
     void setBlack(const int pos) {
         if (!isEmpty(pos)) throw std::runtime_error("Position already occupied.");
-        BBUtils::setBit(black_board, pos);
+        setBit(black_board, pos);
         // XOR the Zobrist hash with the precomputed random value for Black on square `pos`
         zobrist_hash ^= ZOBRIST_TABLE[0][pos];
         ++turn;
@@ -78,7 +70,7 @@ public:
 
     void setWhite(const int pos) {
         if (!isEmpty(pos)) throw std::runtime_error("Position already occupied.");
-        BBUtils::setBit(white_board, pos);
+        setBit(white_board, pos);
         // XOR the Zobrist hash with the precomputed random value for White on square `pos`
         zobrist_hash ^= ZOBRIST_TABLE[1][pos];
         ++turn;
@@ -96,11 +88,6 @@ public:
 
     [[nodiscard]] Bitboard128 getBlackBits() const { return black_board; }
     [[nodiscard]] Bitboard128 getWhiteBits() const { return white_board; }
-
-    void skipTurn() {
-        ++turn;
-        isHeuristicCalculated = false;
-    }
 };
 
 #endif
