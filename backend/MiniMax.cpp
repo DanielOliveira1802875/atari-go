@@ -8,7 +8,7 @@
 
 inline Player opponent(Player p) { return p == BLACK ? WHITE : BLACK; }
 constexpr int INF = WIN * 2;
-constexpr uint64_t CHECK_INTERVAL = 2048;
+constexpr uint64_t CHECK_INTERVAL = 10'000;
 
 inline int distanceAwareScore(int raw, int ply) {
     // raw ==  ±WIN  for true terminal wins/losses
@@ -20,10 +20,9 @@ inline int distanceAwareScore(int raw, int ply) {
 
 class MiniMax {
 private:
-    enum class Bound { EXACT, LOWER, UPPER };
 
     // Transposition table: signature -> (score, depth, bound)
-    mutable ankerl::unordered_dense::map<uint64_t, std::tuple<int, int, Bound> > tt;
+    mutable ankerl::unordered_dense::map<uint64_t, std::tuple<int, int, Bound> > transpositionTable;
 
     struct SearchContext {
         const std::chrono::steady_clock::time_point start;
@@ -32,7 +31,7 @@ private:
         uint64_t nodeCount = 0;
     };
 
-    int minimax(Board &state, int depth, int alpha, int beta, SearchContext &ctx, int ply) const {
+    int minimax(Board &state, int depth, int alpha, int beta, SearchContext &ctx, const int ply) const {
 
         // Check if the search has timed out
         if (ctx.timedOut) return 0;
@@ -47,14 +46,14 @@ private:
 
         // Check transposition table
         uint64_t sig = state.getSignature();
-        if (auto it = tt.find(sig); it != tt.end()) {
+        if (const auto it = transpositionTable.find(sig); it != transpositionTable.end()) {
             auto &[score, storedDepth, flag] = it->second;
             if (storedDepth >= depth) {
                 switch (flag) {
-                    case Bound::EXACT: return score;
-                    case Bound::LOWER: alpha = std::max(alpha, score);
+                    case EXACT: return score;
+                    case LOWER: alpha = std::max(alpha, score);
                         break;
-                    case Bound::UPPER: beta = std::min(beta, score);
+                    case UPPER: beta = std::min(beta, score);
                         break;
                 }
                 if (alpha >= beta) return score;
@@ -91,7 +90,7 @@ private:
         Bound flag = Bound::EXACT;
         if (best <= origAlpha) flag = Bound::UPPER;
         else if (best >= origBeta) flag = Bound::LOWER;
-        tt[sig] = {best, depth, flag};
+        transpositionTable[sig] = {best, depth, flag};
 
         return best;
     }
@@ -111,7 +110,7 @@ public:
         }
         if (succ.size() == 1) return succ[0];
 
-        tt.clear();
+        transpositionTable.clear();
         int overallBestScore = 0;
         std::vector<int> overallBestIdx;
 

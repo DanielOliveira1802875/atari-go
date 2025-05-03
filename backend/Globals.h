@@ -3,6 +3,7 @@
 
 enum Player { BLACK = 1, WHITE = 2 };
 enum Stone { Empty = 0, Black = 1, White = 2 };
+enum Bound { EXACT, LOWER, UPPER };
 
 constexpr int BOARD_EDGE = 9;
 constexpr int BOARD_SIZE = BOARD_EDGE * BOARD_EDGE;

@@ -22,10 +22,10 @@ export default function Board() {
 
   const [board, setBoard] = useState<TCell[]>(() => {
     const b = Array(BOARD_SIZE).fill(".") as TCell[];
-    /*    b[3 * size + 4] = "W";
-    b[3 * size + 5] = "B";
-    b[4 * size + 5] = "W";
-    b[4 * size + 4] = "B";*/
+    /* b[3 * boardEdge + 4] = "W";
+        b[3 * boardEdge + 5] = "B";
+        b[4 * boardEdge + 5] = "W";
+        b[4 * boardEdge + 4] = "B";*/
     return b;
   });
 
