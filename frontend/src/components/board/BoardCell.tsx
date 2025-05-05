@@ -7,6 +7,7 @@ interface UINodeProps {
   takenBy: TCell;
   hideGrid?: boolean;
   isLastMove?: boolean;
+  isCaptured?: boolean;
 }
 
 const BoardCell = (props: UINodeProps) => {
@@ -32,6 +33,8 @@ const BoardCell = (props: UINodeProps) => {
 
   if (props.isLastMove) {
     stoneStyle += " border-2 border-blue-500";
+  } else if (props.isCaptured) {
+    stoneStyle += " border-2 border-rose-600";
   }
 
   // Adding stone styling with shadows and highlights
@@ -52,11 +55,11 @@ const BoardCell = (props: UINodeProps) => {
         <>
           <div className="absolute w-[2px] h-[2px] bg-primary top-1/2 left-1/2 -translate-x-[1px] -translate-y-[2px]" />
           <div className="flex-1 w-full flex items-center justify-center">
-            <div className={`flex-1 h-full border-stone-700 ${div1Border}`} />
-            <div className={`flex-1 h-full border-stone-700 ${div2Border}`} />
+            <div className={`flex-1 h-full border-stone-800 ${div1Border}`} />
+            <div className={`flex-1 h-full border-stone-800 ${div2Border}`} />
           </div>
           <div className="flex-1 w-full flex items-center justify-center">
-            <div className={`flex-1 h-full border-stone-700 ${div3Border}`} />
+            <div className={`flex-1 h-full border-stone-800 ${div3Border}`} />
             <div className="flex-1 h-full" />
           </div>
         </>

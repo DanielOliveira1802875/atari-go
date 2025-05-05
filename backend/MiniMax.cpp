@@ -103,12 +103,45 @@ public:
             throw std::runtime_error("Heuristic not calculated. Call AtariGo::calculateHeuristic() first.");
         }
 
-        std::vector<Board> succ = AtariGo::generateSuccessors(state);
-        if (succ.empty()) {
+        std::vector<Board> successors = AtariGo::generateSuccessors(state);
+
+        // For each strong move, if it is empty and has no neighbors, add it to the successors.
+        std::vector<Board> strongMoves;
+        const auto occupation = state.getOccupiedBits();
+        for (int i = 0; i < STRONG_MOVE_MASK.size(); ++i) {
+            const auto index = getLSBIndex(STRONG_MOVE_MASK[i]);
+            if (state.isEmpty(index)) {
+                const auto liberties = getLibertyBits(STRONG_MOVE_MASK[i], occupation);
+                if (bitCount(liberties) != 4) continue;
+                auto successor = state;
+                successor.setStone(index);
+                AtariGo::calculateHeuristic(successor);
+                strongMoves.push_back(successor);
+                std::cout << "adding strong move: " << index << "\n";
+            }
+        }
+
+        // add a random strong move to the successors
+        if (!strongMoves.empty()) {
+            static std::mt19937_64 rng{std::random_device{}()};
+            std::uniform_int_distribution<int> dist(0, strongMoves.size() - 1);
+            successors.push_back(strongMoves[dist(rng)]);
+        }
+
+        // allways add the center
+        if (state.isEmpty(BOARD_EDGE / 2, BOARD_EDGE / 2)) {
+            Board center = state;
+            center.setStone(BOARD_EDGE / 2, BOARD_EDGE / 2);
+            AtariGo::calculateHeuristic(center);
+            successors.push_back(center);
+        }
+
+
+        if (successors.empty()) {
             std::cerr << "Warning: No successors generated from the current state.\n";
             return state;
         }
-        if (succ.size() == 1) return succ[0];
+        if (successors.size() == 1) return successors[0];
 
         transpositionTable.clear();
         int overallBestScore = 0;
@@ -118,8 +151,8 @@ public:
             int bestScore = (state.getPlayerToMove() == BLACK) ? INF : -INF;
             std::vector<int> bestIdx;
 
-            for (int i = 0; i < static_cast<int>(succ.size()) && !ctx.timedOut; ++i) {
-                const int score = minimax(succ[i], depth - 1, -INF, INF, ctx, 0);
+            for (int i = 0; i < static_cast<int>(successors.size()) && !ctx.timedOut; ++i) {
+                const int score = minimax(successors[i], depth - 1, -INF, INF, ctx, 0);
                 if (ctx.timedOut) break;
 
                 if (state.getPlayerToMove() == BLACK) {
@@ -153,12 +186,11 @@ public:
 
         if (overallBestIdx.empty()) {
             std::cerr << "Error: No best move identified after search. Returning first successor.\n";
-            return succ[0];
+            return successors[0];
         }
 
         static std::mt19937_64 rng{std::random_device{}()};
         std::uniform_int_distribution<int> dist(0, overallBestIdx.size() - 1);
-        succ[overallBestIdx[dist(rng)]].setHeuristic(overallBestScore);
-        return succ[overallBestIdx[dist(rng)]];
+        return successors[overallBestIdx[dist(rng)]];
     }
 };

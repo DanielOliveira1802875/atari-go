@@ -1,10 +1,11 @@
 #ifndef BBUTILS_H
 #define BBUTILS_H
 
+#include <array>
 #include <cstdint>
 #include <cassert>
+#include <iostream>
 #include "Globals.h"
-#include "Masks.h"
 
 /// Clears the least-significant set bit in b. UB if b==0.
 static inline void clearLSB(Bitboard128 &b) noexcept {
@@ -70,6 +71,89 @@ inline int bitCount(Bitboard128 b) noexcept {
     const auto hi = static_cast<uint64_t>(b >> 64);
     return bitCount(lo) + bitCount(hi);
 }
+
+inline void printMask(Bitboard128 mask) {
+    for (int row = 0; row < BOARD_EDGE; ++row) {
+        for (int col = 0; col < BOARD_EDGE; ++col) {
+            const char c = (mask & (ONE_BIT << (row * BOARD_EDGE + col))) ? '1' : '0';
+            std::cout << c << " ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "\n";
+}
+
+// Precomputed file masks for leftmost (A) and rightmost (I) columns
+
+//  100 ... 0
+//  100 ... 0
+//  100 ... 0
+//      ...
+inline Bitboard128 FIRST_COLUMN_MASK = []() {
+    Bitboard128 mask = 0;
+    for (int row = 0; row < BOARD_EDGE; ++row)
+        mask |= (ONE_BIT << (row * BOARD_EDGE + 0));
+    return mask;
+}();
+
+//  0 ... 001
+//  0 ... 001
+//  0 ... 001
+//    ...
+inline Bitboard128 LAST_COLUMN_MASK = []() {
+    Bitboard128 mask = 0;
+    for (int row = 0; row < BOARD_EDGE; ++row)
+        mask |= (ONE_BIT << (row * BOARD_EDGE + BOARD_EDGE - 1));
+    return mask;
+}();
+
+inline Bitboard128 FULL_BOARD_MASK =  ~static_cast<Bitboard128>(0) >> (128 - BOARD_SIZE);
+
+inline Bitboard128 getNeighbourBits(const Bitboard128 bitboard) {
+    // North: shift up BOARD_EDGE rows, then clamp off any bits > BOARD_SIZE-1
+    const Bitboard128 north = (bitboard << BOARD_EDGE) & FULL_BOARD_MASK;
+
+    // South: shift down BOARD_EDGE rows (shifting in zeros on top)
+    const Bitboard128 south = bitboard >> BOARD_EDGE;
+
+    // East/West: mask *before* shifting to prevent wrap-around
+    const Bitboard128 east  = (bitboard & ~LAST_COLUMN_MASK)  << 1;
+    const Bitboard128 west  = (bitboard & ~FIRST_COLUMN_MASK) >> 1;
+
+    // Combine
+    return (north | south | east | west) & ~bitboard;
+}
+
+inline Bitboard128 getLibertyBits(const Bitboard128 bitboard, const Bitboard128 occupied) {
+    return getNeighbourBits(bitboard) & ~occupied;
+}
+
+/// Returns a bitboard with all the bits in the same group as seed set to 1
+inline Bitboard128 floodFillGroupBits(const Bitboard128 bitboard, const Bitboard128 seed) {
+
+    Bitboard128 group = seed;
+
+    // Expand the group while there are neighbors
+    while (true) {
+        const Bitboard128 newStones =
+              getNeighbourBits(group)     // all nbrs of current group bits
+              & bitboard;                 // only same-color stones
+        if (!newStones) break;
+        group |= newStones;
+    }
+    return group;
+}
+
+// array of mask for each move d4 d6 f4 f6 c3 c7 g3 g7 ( strong moves )
+inline std::array<Bitboard128, 8> STRONG_MOVE_MASK = []() {
+    std::array<Bitboard128,8> m{};
+    const int LE[] = {30,48,32,50,20,24,56,60};
+    for(int i=0;i<8;i++){
+        const int be = 80 - LE[i];
+        m[i] = ONE_BIT << be;
+    }
+    return m;
+}();
 
 
 #endif

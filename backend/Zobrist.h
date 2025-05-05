@@ -1,24 +1,32 @@
 #ifndef ZOBRIST_H
 #define ZOBRIST_H
+
+#include <array>
 #include <cstdint>
 #include "Globals.h"
-#include <random>
 
-
-inline uint64_t ZOBRIST_TABLE[2][BOARD_SIZE];
-static bool zobrist_initialised = false;
-
-inline void initZobrist()
-{
-    if (zobrist_initialised) return;
-    std::mt19937_64 rng(123456789ULL);
-    std::uniform_int_distribution<uint64_t> d;
-
-    for (auto & colourTable : ZOBRIST_TABLE)
-        for (uint64_t & cell : colourTable)
-            cell = d(rng);
-
-    zobrist_initialised = true;
+// A constexpr xorshift64 PRNG (seeded with a fixed constant)
+constexpr uint64_t xorshift64(uint64_t& state) {
+    state ^= state << 13;
+    state ^= state >> 7;
+    state ^= state << 17;
+    return state;
 }
 
-#endif
+// Build a 2×BOARD_SIZE table at compile time
+constexpr std::array<std::array<uint64_t, BOARD_SIZE>, 2> generateZobristTable() {
+    std::array<std::array<uint64_t, BOARD_SIZE>, 2> table{};
+    uint64_t state = 123456789ULL;  // fixed seed
+
+    for (size_t color = 0; color < 2; ++color) {
+        for (size_t pos = 0; pos < BOARD_SIZE; ++pos) {
+            table[color][pos] = xorshift64(state);
+        }
+    }
+    return table;
+}
+
+// Now fully initialized at compile time; no init function needed
+inline constexpr auto ZOBRIST_TABLE = generateZobristTable();
+
+#endif // ZOBRIST_H

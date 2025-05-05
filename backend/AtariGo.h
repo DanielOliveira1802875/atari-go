@@ -18,9 +18,7 @@ private:
                                           int &countMinBLibGroups,
                                           int &countMinWLibGroups,
                                           int &totalBlackLib,
-                                          int &totalWhiteLib,
-                                          int &totalExclusiveBlackLib,
-                                          int &totalExclusiveWhiteLib);
+                                          int &totalWhiteLib);
 
 
 public:
@@ -29,6 +27,9 @@ public:
     [[nodiscard]] static std::vector<Board> generateSuccessors(const Board &state);
 
     [[nodiscard]] static bool isTerminal(const Board &state);
+
+    // If state is terminal, returns the bitboard of the captured group; otherwise returns 0.
+    [[nodiscard]] static Bitboard128 getCapturedGroups(Board &state);
 
     static void print(Board &board);
 

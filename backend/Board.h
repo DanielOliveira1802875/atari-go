@@ -88,6 +88,7 @@ public:
 
     [[nodiscard]] Bitboard128 getBlackBits() const { return black_board; }
     [[nodiscard]] Bitboard128 getWhiteBits() const { return white_board; }
+    [[nodiscard]] Bitboard128 getOccupiedBits() const { return black_board | white_board; }
 };
 
 #endif

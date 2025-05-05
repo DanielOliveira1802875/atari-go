@@ -7,8 +7,6 @@
 #include "AtariGo.h"
 #include "Globals.h"
 #include "MiniMax.cpp"
-#include "Masks.h"
-#include "Zobrist.h"
 
 class Game {
 public:
@@ -113,8 +111,6 @@ private:
 };
 
 int main() {
-    initZobrist();
-    initNeighborMasks();
     Game::run();
     return 0;
 }

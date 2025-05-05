@@ -5,7 +5,6 @@
 #include "Board.h"
 #include "MiniMax.cpp"
 #include "Globals.h"
-#include "Masks.h"
 
 struct BoardParseResult {
     Board board;
@@ -15,7 +14,7 @@ struct BoardParseResult {
 
 BoardParseResult parseBoard(const char* boardStr) {
     BoardParseResult result;
-    result.timeLimit = 5000; // Default time limit in ms
+    result.timeLimit = 3000; // Default time limit in ms
     result.maxDepth = 64; // Default max depth
 
     std::string input(boardStr);
@@ -42,7 +41,7 @@ BoardParseResult parseBoard(const char* boardStr) {
         try {
             result.timeLimit = std::stoi(parts[1]);
         } catch (...) {
-            std::cerr << "Failed to parse time limit, using default 1000ms\n";
+            std::cout << "Failed to parse time limit, using default 1000ms\n";
         }
     }
 
@@ -51,7 +50,7 @@ BoardParseResult parseBoard(const char* boardStr) {
         try {
             result.maxDepth = std::stoi(parts[2]);
         } catch (...) {
-            std::cerr << "Failed to parse max depth, using default MAX_SEARCH_DEPTH\n";
+            std::cout << "Failed to parse max depth, using default MAX_SEARCH_DEPTH\n";
         }
     }
 
@@ -63,10 +62,10 @@ BoardParseResult parseBoard(const char* boardStr) {
     }
     AtariGo::calculateHeuristic(result.board);
 
-    std::cerr << "Parsed time limit: " << result.timeLimit << "ms\n";
-    std::cerr << "Parsed max depth: " << result.maxDepth << "\n";
-    std::cerr << "Turn: " << static_cast<int>(result.board.getTurn()) << " " << (result.board.getPlayerToMove() == BLACK ? "BLACK" : "WHITE") << "\n";
-    std::cerr << "Parsed board state:\n";
+    std::cout << "Parsed time limit: " << result.timeLimit << "ms\n";
+    std::cout << "Parsed max depth: " << result.maxDepth << "\n";
+    std::cout << "Turn: " << static_cast<int>(result.board.getTurn()) << " " << (result.board.getPlayerToMove() == BLACK ? "BLACK" : "WHITE") << "\n";
+    std::cout << "Parsed board state:\n";
     AtariGo::print(result.board);
 
     return result;
@@ -88,51 +87,46 @@ extern "C" {
 
     EMSCRIPTEN_KEEPALIVE
     const char* getBestMove(const char* boardStr) {
-        std::cerr << "Parsing board: " << boardStr << "\n";
-        BoardParseResult parseResult = parseBoard(boardStr);
-        std::cerr << "Board parsed. Player to play: "
-            << (parseResult.board.getPlayerToMove() == BLACK ? "BLACK" : "WHITE")
-            << " with time limit: " << parseResult.timeLimit << "ms\n";
+        std::cout << "getBestMove called with board: " << boardStr << "\n";
+        auto [board, timeLimit, maxDepth] = parseBoard(boardStr);
 
-        initZobrist();
-        initNeighborMasks();
-        MiniMax minimax;
+        const MiniMax minimax;
 
-        std::cerr << "Calling minimax with time limit of " << parseResult.timeLimit << "ms...\n";
-        Board bestMove = minimax.getBestMove(parseResult.board, std::chrono::milliseconds(parseResult.timeLimit), parseResult.maxDepth);
-        std::cerr << "Minimax returned.\n";
+        std::cout << "Calling minimax with time limit of " << timeLimit << "ms...\n";
+        const Board bestMove = minimax.getBestMove(board, std::chrono::milliseconds(timeLimit), maxDepth);
+        std::cout << "Minimax returned.\n";
 
         std::string result = boardToString(bestMove);
         if (bestMove.getHeuristic() == WIN) result += ";WHITE";
         else if (bestMove.getHeuristic() == -WIN) result += ";BLACK";
         else result += ";";
         result += ";" + std::to_string(bestMove.getHeuristic());
-        std::cerr << "Best move board state: " << result << "\n";
+        std::cout << "Best move board state: " << result << "\n";
 
-        char* ret = new char[result.size() + 1];
+        const auto ret = new char[result.size() + 1];
         std::strcpy(ret, result.c_str());
         return ret;
     }
 
     EMSCRIPTEN_KEEPALIVE
-    const char* getSuccessors(const char* boardStr) {
-        std::cerr << "Parsing board: " << boardStr << "\n";
-        BoardParseResult parseResult = parseBoard(boardStr);
-        std::cerr << "Board parsed. Player to play: "
-            << (parseResult.board.getPlayerToMove() == BLACK ? "BLACK" : "WHITE")
-            << " with time limit: " << parseResult.timeLimit << "ms\n";
-        const auto successors = AtariGo::generateSuccessors(parseResult.board);
-        std::cerr << "Successors generated.\n";
-        std::string result;
-        for (const auto& successor : successors) {
-            result += boardToString(successor) + ";";
+    const char* checkCapture(const char* boardStr) {
+        std::cout << "Checking capturing with board: " << boardStr << "\n";
+        BoardParseResult parsedResult = parseBoard(boardStr);
+        auto capturedBitBoard = AtariGo::getCapturedGroups(parsedResult.board);
+        std::string resultStr = "";
+        while (capturedBitBoard) {
+            const int pos = popLSB(capturedBitBoard);
+            resultStr += std::to_string(pos) + ",";
         }
-        if (!result.empty()) {
-            result.pop_back(); // Remove the last semicolon
-        }
-        std::cerr << "Successors string: " << result << "\n";
-        char* ret = new char[result.size() + 1];
-        std::strcpy(ret, result.c_str());
+
+        if (!resultStr.empty()) resultStr.pop_back(); // Remove the last comma
+
+        if (parsedResult.board.getHeuristic() >= WIN) resultStr += ";WHITE";
+        else if (parsedResult.board.getHeuristic() <= -WIN) resultStr += ";BLACK";
+
+        const auto ret = new char[resultStr.size() + 1];
+        std::strcpy(ret, resultStr.c_str());
+        std::cout << "Captured bitboard: " << resultStr << "\n";
         return ret;
     }
 
