@@ -43,12 +43,12 @@ endif()
 find_package(Threads REQUIRED)
 
 # Source files
-add_executable(atari_go
+add_executable(
+        atari_go
         main.cpp
         AtariGo.cpp
         Board.h
         MiniMax.cpp
-        Masks.h
         Zobrist.h
         BBUtils.h
 )

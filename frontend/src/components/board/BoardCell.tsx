@@ -27,7 +27,7 @@ const BoardCell = (props: UINodeProps) => {
   if (["bottomEdge", "lowerRight", "lowerLeft"].includes(position)) div3Border = "";
   else div3Border = "border-r-2";
 
-  let stoneStyle = "w-[95%] h-[95%] rounded-full transition-all duration-100 ease-in-out";
+  let stoneStyle = "w-[95%] h-[95%] rounded-full transition-opacity duration-200 ease-in-out";
   if (takenBy != ".") stoneStyle += " opacity-100";
   else stoneStyle += " opacity-0 hover:opacity-50";
 

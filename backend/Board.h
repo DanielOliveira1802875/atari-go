@@ -30,6 +30,10 @@ public:
         isHeuristicCalculated = true;
     }
 
+    void invalidateHeuristic() {
+        isHeuristicCalculated = false;
+    }
+
     void setStone(const int row, const int col) { setStone(pos_from_coord(row, col)); }
 
     [[nodiscard]] bool isEmpty(int row, int col) const { return isEmpty(pos_from_coord(row, col)); }

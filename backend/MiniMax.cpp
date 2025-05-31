@@ -117,7 +117,6 @@ public:
                 successor.setStone(index);
                 AtariGo::calculateHeuristic(successor);
                 strongMoves.push_back(successor);
-                std::cout << "adding strong move: " << index << "\n";
             }
         }
 

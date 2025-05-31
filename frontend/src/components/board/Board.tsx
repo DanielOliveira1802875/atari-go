@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import BoardCell from "@/components/board/BoardCell.tsx";
 import { levelConfigs, TCell, TPlayer, usePreferences } from "@/stores/usePreferences.ts";
 import { getUINodePosition } from "@/lib/Helpers.ts";
-import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { useNavigate } from "react-router";
 import StatusMessage from "@/components/board/StatusMessage.tsx";
 import AIThinkingProgress from "@/components/board/AIThinkingProgress.tsx";
+import { ArrowLeftToLine, ArrowRightToLine } from "lucide-react";
 
-const findLastMoveIndex = (oldB: TCell[], newB: TCell[]): number | null => {
+const findLastMoveIndex = (oldB: TCell[] | undefined, newB: TCell[]): number | null => {
+  if (!oldB) return null; // For the very first board in history
   for (let i = 0; i < newB.length; i++) {
     if (oldB[i] === "." && (newB[i] === "B" || newB[i] === "W")) return i;
   }
@@ -17,10 +18,6 @@ const findLastMoveIndex = (oldB: TCell[], newB: TCell[]): number | null => {
 
 const getEmptyBoard = (size: number): TCell[] => {
   const b = Array(size).fill(".") as TCell[];
-  /*     b[3 * boardEdge + 4] = "W";
-     b[3 * boardEdge + 5] = "B";
-     b[4 * boardEdge + 5] = "W";
-     b[4 * boardEdge + 4] = "B";*/
   return b;
 };
 
@@ -29,7 +26,10 @@ export default function Board() {
 
   const BOARD_SIZE = boardEdge * boardEdge;
 
-  const [board, setBoard] = useState<TCell[]>(getEmptyBoard(BOARD_SIZE));
+  const initialBoardState = getEmptyBoard(BOARD_SIZE);
+  const [board, setBoard] = useState<TCell[]>(initialBoardState);
+  const [boardHistory, setBoardHistory] = useState<TCell[][]>([initialBoardState]);
+
   const depthLimit = levelConfigs[level].depth;
   const timeLimitMs = levelConfigs[level].time;
 
@@ -40,17 +40,40 @@ export default function Board() {
   const [wasmLoading, setWasmLoading] = useState(true);
   const [aiThinking, setAiThinking] = useState(false);
   const capturedStonesIndexes = useRef<number[]>([]);
+  const finalWinner = useRef<TPlayer | null>(null); // To store the winner for review status
   const navigate = useNavigate();
 
   const workerRef = useRef<Worker | null>(null);
+
+  const [isReviewMode, setIsReviewMode] = useState(false);
+  const [reviewBoardIndex, setReviewBoardIndex] = useState(0);
+
+  const resetGameState = useCallback(
+    (startPlayer: TPlayer = "B") => {
+      capturedStonesIndexes.current = [];
+      finalWinner.current = null;
+      setLastMoveIndex(null);
+
+      const newEmptyBoard = getEmptyBoard(BOARD_SIZE);
+      setBoard(newEmptyBoard);
+      setBoardHistory([newEmptyBoard]);
+
+      setGameOver(false);
+      setCurrentPlayer(startPlayer);
+      setAiThinking(false);
+      setIsReviewMode(false);
+      setReviewBoardIndex(0);
+    },
+    [BOARD_SIZE],
+  );
 
   const togglePlayer = useCallback(() => {
     setCurrentPlayer((prev) => (prev === "B" ? "W" : "B"));
   }, []);
 
-  const checkWinner = useCallback((newBoard: TCell[]) => {
-    console.log("checkWinner", newBoard);
-    workerRef.current?.postMessage({ type: "checkCapture", payload: `${newBoard.join("")}` });
+  const checkWinner = useCallback((currentBoardState: TCell[]) => {
+    console.log("checkWinner", currentBoardState);
+    workerRef.current?.postMessage({ type: "checkCapture", payload: `${currentBoardState.join("")}` });
   }, []);
 
   useEffect(() => {
@@ -62,102 +85,194 @@ export default function Board() {
       }
       if (type === "moveDone") {
         const [boardStr] = payload.split(";");
-        const newBoard = boardStr.split("") as TCell[];
-        setBoard((prev) => {
-          setLastMoveIndex(findLastMoveIndex(prev, newBoard));
-          return newBoard;
+        const newBoardFromAI = boardStr.split("") as TCell[];
+
+        setBoard((prevBoard) => {
+          setLastMoveIndex(findLastMoveIndex(prevBoard, newBoardFromAI));
+          return newBoardFromAI;
         });
-        checkWinner(newBoard);
+        setBoardHistory((prevHistory) => [...prevHistory, newBoardFromAI]);
+
+        checkWinner(newBoardFromAI);
       }
       if (type === "checkCaptureDone") {
         if (payload === "") {
           setAiThinking(false);
-          togglePlayer();
+          if (!gameOver) {
+            // Only toggle player if game is not over
+            togglePlayer();
+          }
           return;
         }
         console.log("checkCaptureDone", payload);
-        const [boardStr, winnerStr] = payload.split(";");
-        const indexes = boardStr.split(",") as TCell[];
-        capturedStonesIndexes.current = indexes.map((index) => parseInt(index, 10));
+        const [capturedIndexesStr, winnerStr] = payload.split(";");
+        capturedStonesIndexes.current = capturedIndexesStr.split(",").map((index: string) => parseInt(index, 10));
         setGameOver(true);
         const winner = (winnerStr === "BLACK" ? "B" : "W") as TPlayer;
+        finalWinner.current = winner;
         setStatusMessage(<span>{`A partida terminou, as ${winner === "B" ? "pretas" : "brancas"} venceram!`}</span>);
+        setAiThinking(false);
       }
     };
     worker.postMessage({ type: "init" });
     workerRef.current = worker;
     return () => worker.terminate();
-  }, [checkWinner, togglePlayer]);
+  }, [checkWinner, togglePlayer, gameOver]); // Added gameOver to dependencies
 
   useEffect(() => {
-    if (!wasmLoading && currentPlayer !== playerColor && !aiThinking && !gameOver) {
+    if (isReviewMode) return;
+    if (gameOver) return;
+
+    if (!wasmLoading && currentPlayer !== playerColor && !aiThinking) {
       setAiThinking(true);
       setStatusMessage(<span>Aguarde pela jogada da IA...</span>);
       workerRef.current?.postMessage({ type: "getBestMove", payload: `${board.join("")};${timeLimitMs};${depthLimit}` });
-    }
-    if (currentPlayer === playerColor && !aiThinking && !gameOver && !wasmLoading) {
+    } else if (!wasmLoading && currentPlayer === playerColor && !aiThinking) {
       setStatusMessage(<span>Sua vez</span>);
+    } else if (wasmLoading) {
+      setStatusMessage(<span>A carregar o motor de jogo...</span>);
     }
-  }, [aiThinking, currentPlayer, wasmLoading, gameOver]);
+  }, [board, currentPlayer, playerColor, aiThinking, wasmLoading, gameOver, timeLimitMs, depthLimit, isReviewMode]);
 
   const handleCellClick = (idx: number) => {
-    if (!playerColor || gameOver || wasmLoading || aiThinking || board[idx] !== "." || currentPlayer !== playerColor) return;
+    if (isReviewMode || !playerColor || gameOver || wasmLoading || aiThinking || board[idx] !== "." || currentPlayer !== playerColor) return;
+
+    const newPlayerBoard = [...board];
+    newPlayerBoard[idx] = playerColor;
+
     setLastMoveIndex(idx);
-    const newBoard = [...board];
-    newBoard[idx] = playerColor;
-    setBoard(newBoard);
-    checkWinner(newBoard);
+    setBoard(newPlayerBoard);
+    setBoardHistory((prevHistory) => [...prevHistory, newPlayerBoard]);
+
+    checkWinner(newPlayerBoard);
   };
 
-  const isBoardInteractive = !wasmLoading && !gameOver && !aiThinking && !!playerColor;
+  const startReview = () => {
+    if (boardHistory.length <= 1) return;
+    setIsReviewMode(true);
+    setReviewBoardIndex(0);
+    setBoard(boardHistory[0]);
+    setLastMoveIndex(null);
+    setStatusMessage(<span>Revisão da partida</span>);
+  };
+
+  const exitReview = () => {
+    setIsReviewMode(false);
+    setReviewBoardIndex(0);
+    setBoard(boardHistory[boardHistory.length - 1]);
+    setLastMoveIndex(findLastMoveIndex(boardHistory[boardHistory.length - 2], boardHistory[boardHistory.length - 1]));
+    if (gameOver && finalWinner.current) {
+      setStatusMessage(<span>{`A partida terminou, as ${finalWinner.current === "B" ? "pretas" : "brancas"} venceram!`}</span>);
+    } else if (!wasmLoading) {
+      setStatusMessage(<span>Sua vez</span>);
+    }
+  };
+
+  const navigateReview = (direction: "next" | "prev") => {
+    let newIndex = reviewBoardIndex;
+    if (direction === "next" && reviewBoardIndex < boardHistory.length - 1) {
+      newIndex++;
+    } else if (direction === "prev" && reviewBoardIndex > 0) {
+      newIndex--;
+    } else {
+      return;
+    }
+
+    setReviewBoardIndex(newIndex);
+    const currentReviewBoardState = boardHistory[newIndex];
+    const prevReviewBoardState = newIndex > 0 ? boardHistory[newIndex - 1] : undefined;
+    setBoard(currentReviewBoardState);
+    setLastMoveIndex(findLastMoveIndex(prevReviewBoardState, currentReviewBoardState));
+    const moveNumber = newIndex; // 0 is initial, 1 is first move
+    setStatusMessage(<span>{`Revisão: Jogada ${moveNumber} de ${boardHistory.length - 1}`}</span>);
+  };
+
+  const isBoardInteractive = !isReviewMode && !wasmLoading && !gameOver && !aiThinking && !!playerColor && currentPlayer === playerColor;
+
+  const displayBoard = isReviewMode ? boardHistory[reviewBoardIndex] : board;
+  const displayLastMoveIndex = isReviewMode ? (reviewBoardIndex > 0 ? findLastMoveIndex(boardHistory[reviewBoardIndex - 1], boardHistory[reviewBoardIndex]) : null) : lastMoveIndex;
+
+  const showCapturedStonesForCell = (idx: number) => {
+    if (!isReviewMode) {
+      return capturedStonesIndexes.current.includes(idx);
+    }
+    if (isReviewMode && reviewBoardIndex === boardHistory.length - 1 && gameOver) {
+      return capturedStonesIndexes.current.includes(idx);
+    }
+    return false;
+  };
 
   return (
     <div className="flex flex-col items-center gap-6">
       <div className="text-center">
         <StatusMessage>{statusMessage}</StatusMessage>
       </div>
+
       <div className="w-full max-w-md">
         <AIThinkingProgress timeLimitMs={timeLimitMs} isThinking={aiThinking && !gameOver} />
       </div>
 
       <div className="bg-gradient-to-br from-stone-300 to-stone-400 rounded-xl p-6 shadow-lg border relative border-stone-400 overflow-hidden">
         <div
-          className={`transition-all duration-500 ease-in-out absolute top-0 bottom-0 left-0 right-0 z-20 ${
-            isBoardInteractive ? "opacity-0 pointer-events-none" : "opacity-40  bg-zinc-900 pointer-events-auto"
+          className={`transition-all duration-500 ease-in-out absolute top-0 bottom-0 left-0 right-0 z-20 bg-zinc-900 opacity-0 ${
+            isBoardInteractive ? "pointer-events-none" : "pointer-events-auto" + !isBoardInteractive && !isReviewMode ? " opacity-40" : ""
           }`}
         />
-        <div className={`grid grid-cols-9 w-[270px] h-[270px] relative sm:w-[450px] sm:h-[450px]`}>
-          {board.map((cell, idx) => (
-            <div key={idx} className="w-[30px] h-[30px] sm:w-[50px] sm:h-[50px] cursor-pointer" onClick={() => handleCellClick(idx)}>
+        <div className={`grid grid-cols-${boardEdge} w-[270px] h-[270px] relative sm:w-[${boardEdge * 50}px] sm:h-[${boardEdge * 50}px]`}>
+          {displayBoard.map((cell, idx) => (
+            <div
+              key={idx}
+              className={`w-[${(30 * 9) / boardEdge}px] h-[${(30 * 9) / boardEdge}px] sm:w-[50px] sm:h-[50px] ${isBoardInteractive ? "cursor-pointer" : "cursor-default"}`}
+              onClick={() => handleCellClick(idx)}
+            >
               <BoardCell
                 position={getUINodePosition(boardEdge, idx)}
-                currentPlayer={currentPlayer}
+                currentPlayer={isReviewMode ? (reviewBoardIndex % 2 === 0 ? "B" : "W") : currentPlayer} // Approximate player turn for review
                 takenBy={cell}
-                isLastMove={idx === lastMoveIndex}
-                isCaptured={capturedStonesIndexes.current.includes(idx)}
+                isLastMove={idx === displayLastMoveIndex}
+                isCaptured={showCapturedStonesForCell(idx)}
               />
             </div>
           ))}
         </div>
       </div>
       <div>
-        <Button size="lg" onClick={() => navigate("/")} className="bg-stone-800 hover:bg-stone-900">
-          Voltar
-        </Button>
-        <Button
-          size="lg"
-          onClick={() => {
-            capturedStonesIndexes.current = [];
-            setLastMoveIndex(null);
-            setBoard(getEmptyBoard(BOARD_SIZE));
-            setGameOver(false);
-            setCurrentPlayer("B");
-            setAiThinking(false);
-          }}
-          className="bg-stone-800 hover:bg-stone-900 ml-4"
-        >
-          Reiniciar
-        </Button>
+        {!isReviewMode && (
+          <>
+            <Button size="lg" onClick={() => navigate("/")} className="bg-stone-800 hover:bg-stone-950">
+              Voltar
+            </Button>
+            <Button disabled={wasmLoading || aiThinking} size="lg" onClick={() => resetGameState()} className="bg-stone-800 hover:bg-stone-950 ml-4">
+              Reiniciar
+            </Button>
+            {gameOver && boardHistory.length > 1 && (
+              <Button size="lg" onClick={startReview} className="bg-blue-800 hover:bg-blue-950 ml-4">
+                Rever Partida
+              </Button>
+            )}
+          </>
+        )}
+        {isReviewMode && (
+          <div className="flex items-center justify-between gap-2">
+            <Button size="lg" onClick={exitReview} className="bg-stone-800 hover:bg-stone-950">
+              Voltar
+            </Button>
+            <Button size="lg" onClick={() => resetGameState()} className="bg-stone-800 hover:bg-stone-950 ml-4">
+              Reiniciar
+            </Button>
+            <Button size="icon" onClick={() => navigateReview("prev")} disabled={reviewBoardIndex === 0} className="bg-stone-800 hover:bg-stone-950 ml-4 cursor-pointer">
+              <ArrowLeftToLine className="w-4 h-4" />
+            </Button>
+            <Button
+              size="icon"
+              onClick={() => navigateReview("next")}
+              disabled={reviewBoardIndex === boardHistory.length - 1}
+              className="bg-stone-800 hover:bg-stone-950 cursor-pointer"
+            >
+              <ArrowRightToLine className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
