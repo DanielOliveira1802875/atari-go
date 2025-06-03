@@ -10,8 +10,7 @@ inline Player opponent(Player p) { return p == BLACK ? WHITE : BLACK; }
 constexpr int INF = WIN * 2;
 constexpr uint64_t CHECK_INTERVAL = 10'000;
 
-inline int distanceAwareScore(int raw, int ply) {
-    // raw ==  ±WIN  for true terminal wins/losses
+inline int distanceAwareScore(const int raw, const int ply) {
     if (raw >=  WIN) return raw - ply;   // sooner win  -> bigger value
     if (raw <= -WIN) return raw + ply;   // later loss -> less negative
     return raw;                          // heuristic, leave untouched
@@ -31,7 +30,7 @@ private:
         uint64_t nodeCount = 0;
     };
 
-    int minimax(Board &state, int depth, int alpha, int beta, SearchContext &ctx, const int ply) const {
+    int minimax(const Board &state, int depth, int alpha, int beta, SearchContext &ctx, const int ply) const {
 
         // Check if the search has timed out
         if (ctx.timedOut) return 0;
@@ -45,16 +44,14 @@ private:
         }
 
         // Check transposition table
-        uint64_t sig = state.getSignature();
-        if (const auto it = transpositionTable.find(sig); it != transpositionTable.end()) {
+        const uint64_t signature = state.getSignature();
+        if (const auto it = transpositionTable.find(signature); it != transpositionTable.end()) {
             auto &[score, storedDepth, flag] = it->second;
             if (storedDepth >= depth) {
                 switch (flag) {
                     case EXACT: return score;
-                    case LOWER: alpha = std::max(alpha, score);
-                        break;
-                    case UPPER: beta = std::min(beta, score);
-                        break;
+                    case LOWER: alpha = std::max(alpha, score); break;
+                    case UPPER: beta = std::min(beta, score); break;
                 }
                 if (alpha >= beta) return score;
             }
@@ -64,15 +61,16 @@ private:
         if (depth == 0 || AtariGo::isTerminal(state))  return distanceAwareScore(state.getHeuristic(), ply);
 
         // Generate successors
-        auto succ = AtariGo::generateSuccessors(state);
-        if (succ.empty()) return state.getHeuristic();
+        const auto successors = AtariGo::generateSuccessors(state);
+        if (successors.empty()) return distanceAwareScore(state.getHeuristic(), ply);
 
         const Player toMove = state.getPlayerToMove();
-        int best = (toMove == WHITE) ? -INF : INF;
-        int origAlpha = alpha, origBeta = beta;
+        int best = toMove == WHITE ? -INF : INF;
+        const int origAlpha = alpha;
+        const int origBeta = beta;
 
         // Iterate through successors
-        for (auto &child: succ) {
+        for (auto &child: successors) {
             int score = minimax(child, depth - 1, alpha, beta, ctx, ply + 1);
             if (ctx.timedOut) return 0;
 
@@ -87,16 +85,17 @@ private:
         }
 
         // Store the best score in the transposition table
-        Bound flag = Bound::EXACT;
-        if (best <= origAlpha) flag = Bound::UPPER;
-        else if (best >= origBeta) flag = Bound::LOWER;
-        transpositionTable[sig] = {best, depth, flag};
+        Bound flag = EXACT;
+        if (best <= origAlpha) flag = UPPER;
+        else if (best >= origBeta) flag = LOWER;
+        transpositionTable[signature] = {best, depth, flag};
 
         return best;
     }
 
 public:
-    Board getBestMove(const Board &state, std::chrono::milliseconds timeLimit, int depthLimit) const {
+    Board getBestMove(const Board &state, const std::chrono::milliseconds timeLimit, const int depthLimit) const {
+        static std::mt19937_64 rng{std::random_device{}()};
         SearchContext ctx{std::chrono::steady_clock::now(), timeLimit};
 
         if (!state.getIsHeuristicCalculated()) {
@@ -108,10 +107,10 @@ public:
         // For each strong move, if it is empty and has no neighbors, add it to the successors.
         std::vector<Board> strongMoves;
         const auto occupation = state.getOccupiedBits();
-        for (int i = 0; i < STRONG_MOVE_MASK.size(); ++i) {
-            const auto index = getLSBIndex(STRONG_MOVE_MASK[i]);
+        for (const Bitboard128 i : STRONG_MOVE_MASK) {
+            const auto index = getLSBIndex(i);
             if (state.isEmpty(index)) {
-                const auto liberties = getLibertyBits(STRONG_MOVE_MASK[i], occupation);
+                const auto liberties = getLibertyBits(i, occupation);
                 if (bitCount(liberties) != 4) continue;
                 auto successor = state;
                 successor.setStone(index);
@@ -122,7 +121,6 @@ public:
 
         // add a random strong move to the successors
         if (!strongMoves.empty()) {
-            static std::mt19937_64 rng{std::random_device{}()};
             std::uniform_int_distribution<int> dist(0, strongMoves.size() - 1);
             successors.push_back(strongMoves[dist(rng)]);
         }
@@ -146,32 +144,39 @@ public:
         int overallBestScore = 0;
         std::vector<int> overallBestIdx;
 
+        const Player currentPlayer = state.getPlayerToMove();
+
         for (int depth = 1; depth <= depthLimit && !ctx.timedOut; ++depth) {
-            int bestScore = (state.getPlayerToMove() == BLACK) ? INF : -INF;
+            int bestScore = (currentPlayer == BLACK) ? INF : -INF;
             std::vector<int> bestIdx;
 
             for (int i = 0; i < static_cast<int>(successors.size()) && !ctx.timedOut; ++i) {
-                const int score = minimax(successors[i], depth - 1, -INF, INF, ctx, 0);
-                if (ctx.timedOut) break;
-
-                if (state.getPlayerToMove() == BLACK) {
-                    if (score < bestScore) {
-                        bestScore = score;
-                        bestIdx = {i};
-                    } else if (score == bestScore) bestIdx.push_back(i);
-                } else {
+                int score;
+                if (currentPlayer == WHITE) {
+                    score = minimax(successors[i], depth - 1, bestScore - 1, INF, ctx, 0);
                     if (score > bestScore) {
                         bestScore = score;
                         bestIdx = {i};
-                    } else if (score == bestScore) bestIdx.push_back(i);
+                    } else if (score == bestScore) {
+                        bestIdx.push_back(i);
+                    }
+                } else {
+                    score = minimax(successors[i], depth - 1, -INF, bestScore + 1, ctx, 0);
+                    if (score < bestScore) {
+                        bestScore = score;
+                        bestIdx = {i};
+                    } else if (score == bestScore) {
+                        bestIdx.push_back(i);
+                    }
                 }
+                if (ctx.timedOut) break;
             }
 
             if (!ctx.timedOut && !bestIdx.empty()) {
                 overallBestScore = bestScore;
                 overallBestIdx = bestIdx;
 
-                auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                const auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::steady_clock::now() - ctx.start).count();
 
                 std::cout << "Completed depth " << depth
@@ -188,7 +193,6 @@ public:
             return successors[0];
         }
 
-        static std::mt19937_64 rng{std::random_device{}()};
         std::uniform_int_distribution<int> dist(0, overallBestIdx.size() - 1);
         return successors[overallBestIdx[dist(rng)]];
     }

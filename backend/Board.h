@@ -18,7 +18,7 @@ private:
     int heuristic;
 
     // Convert (row, col) into a single bit‐index: row-major, 0 ≤ row,col < BOARD_EDGE
-    static constexpr int pos_from_coord(const int row, const int col) {
+    static constexpr int pos_from_coord(const int row, const int col) { // constexpr
         return row * BOARD_EDGE + col;
     }
 
@@ -36,9 +36,9 @@ public:
 
     void setStone(const int row, const int col) { setStone(pos_from_coord(row, col)); }
 
-    [[nodiscard]] bool isEmpty(int row, int col) const { return isEmpty(pos_from_coord(row, col)); }
+    [[nodiscard]] bool isEmpty(const int row, const int col) const { return isEmpty(pos_from_coord(row, col)); }
 
-    [[nodiscard]] static bool isInBounds(const int row, const int col) {
+    [[nodiscard]] static constexpr  bool isInBounds(const int row, const int col) {
         return row >= 0 && row < BOARD_EDGE && col >= 0 && col < BOARD_EDGE;
     }
 

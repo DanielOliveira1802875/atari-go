@@ -7,38 +7,39 @@
 #include "BBUtils.h"
 
 
+
 std::vector<Board> AtariGo::generateSuccessors(const Board &state) {
-    std::vector<std::pair<int, Board> > scored;
-    scored.reserve(BOARD_SIZE);
+    static std::vector<std::pair<int, Board>> scored_successors(BOARD_SIZE);
+    scored_successors.clear();
 
     const Bitboard128 occupiedBits = state.getBlackBits() | state.getWhiteBits();
-
     Bitboard128 successorBits = getNeighbourBits(occupiedBits);
 
     while (successorBits) {
         const int pos = popLSB(successorBits);
-        Board child = state;
-        child.setStone(pos);
-        calculateHeuristic(child);
-        scored.emplace_back(child.getHeuristic(), child);
+
+        scored_successors.emplace_back();
+        auto&[score, successor] = scored_successors.back();
+
+        successor = state;
+        successor.setStone(pos);
+        calculateHeuristic(successor);
+        score = successor.getHeuristic();
     }
 
     if (state.getPlayerToMove() == BLACK) {
-        std::sort(scored.begin(), scored.end(),
-                  [](auto &a, auto &b) { return a.first < b.first; });
+        std::sort(scored_successors.begin(), scored_successors.end(),
+                  [](const auto &a, const auto &b) { return a.first < b.first; });
     } else {
-        std::sort(scored.begin(), scored.end(),
-                  [](auto &a, auto &b) { return a.first > b.first; });
+        std::sort(scored_successors.begin(), scored_successors.end(),
+                  [](const auto &a, const auto &b) { return a.first > b.first; });
     }
 
-    int truncate = settings.SUCCESSOR_TRUNCATION_THRESHOLD;
-    if (scored.size() > truncate) {
-        scored.resize(truncate);
-    }
     std::vector<Board> successors;
-    successors.reserve(scored.size());
-    for (const auto &pair: scored) {
-        successors.push_back(pair.second);
+    successors.reserve(scored_successors.size());
+
+    for (const auto &[fst, snd] : scored_successors) {
+        successors.push_back(snd);
     }
     return successors;
 }
@@ -61,8 +62,7 @@ void AtariGo::computeLibertiesHeuristic(
     const Bitboard128 occupiedBits = blackBitboard | whiteBitboard;
 
     // Initialize output parameters that are summed or counted
-    minBlackLib1 = minBlackLib2 = minBlackLib3 = minBlackLib4 = settings.STARTING_MIN_LIBERTIES;
-    minWhiteLib1 = minWhiteLib2 = minWhiteLib3 = minWhiteLib4 = settings.STARTING_MIN_LIBERTIES;
+    minBlackLib1 = minBlackLib2 = minBlackLib3 = minBlackLib4 = minWhiteLib1 = minWhiteLib2 = minWhiteLib3 = minWhiteLib4 = state.getTurn() < 50 ? settings.STARTING_MIN_LIBERTIES : BOARD_SIZE;
     countMinB1LibGroups = 0;
     countMinW1LibGroups = 0;
     sumTotalBlackLib = 0;
@@ -213,7 +213,6 @@ void AtariGo::calculateHeuristic(Board &state) {
         // Both groups have more than 1 liberty, evaluate based on liberties.
         score += (minW1 - minB1) * settings.MIN_LIB_1_MULTIPLIER;
     }
-
 
     score += (minW2 - minB2) * settings.MIN_LIB_2_MULTIPLIER;
     score += (minW3 - minB3) * settings.MIN_LIB_3_MULTIPLIER;

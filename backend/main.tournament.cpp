@@ -89,7 +89,7 @@ Player playAIGame(const Settings& settingsPlayer1, const std::string& player1Nam
 int main() {
     Settings settings_v1;
     settings_v1.TOTAL_LIB_MULTIPLIER = 0;
-    settings_v1.STARTING_MIN_LIBERTIES = 8;
+    settings_v1.STARTING_MIN_LIBERTIES = BOARD_SIZE;
     //settings_v1.UNIQUE_LIB_MULTIPLIER = 1000;
     //settings_v1.STARTING_MIN_LIBERTIES = BOARD_SIZE;
     //settings_v1.UNIQUE_LIB_MULTIPLIER = 5;
@@ -102,16 +102,16 @@ int main() {
     //settings_v2.MIN_LIB_3_MULTIPLIER = settings_v2.MIN_LIB_2_MULTIPLIER / 4;
     //settings_v2.MIN_LIB_4_MULTIPLIER = settings_v2.MIN_LIB_3_MULTIPLIER / 4;
     //settings_v2.SUCCESSOR_TRUNCATION_THRESHOLD = 8;
-    settings_v2.STARTING_MIN_LIBERTIES = 6;
+    settings_v2.STARTING_MIN_LIBERTIES = BOARD_SIZE;
     //settings_v2.UNIQUE_LIB_MULTIPLIER = 0;
     //settings_v1.SUCCESSOR_TRUNCATION_THRESHOLD = 6;
 
     int player1_wins = 0;
     int player2_wins = 0;
     int draws = 0;
-    const int NUM_GAMES = 2;
+    const int NUM_GAMES = 20;
     const int THINK_TIME_MS = 6000;
-    const int MAX_DEPTH_SEARCH = 64;
+    const int MAX_DEPTH_SEARCH = 0;
 
     for (int i = 0; i < NUM_GAMES; ++i) {
         Player winner;

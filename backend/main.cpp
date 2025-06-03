@@ -15,10 +15,10 @@ public:
         Board board;
         AtariGo atariGo;
 
-        /*board.setStone(3, 5);
+        board.setStone(3, 5);
         board.setStone(3, 4);
         board.setStone(4, 4);
-        board.setStone(4, 5);*/
+        board.setStone(4, 5);
         AtariGo::calculateHeuristic(board);
 
         constexpr Player human = BLACK;

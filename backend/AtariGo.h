@@ -20,7 +20,9 @@ private:
         int &uniqueTotalWhiteLib  // Count of unique white liberty points
     );
 
+
 public:
+
     static void calculateHeuristic(Board &state);
 
     [[nodiscard]] static std::vector<Board> generateSuccessors(const Board &state);

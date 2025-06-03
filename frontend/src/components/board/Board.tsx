@@ -18,11 +18,16 @@ const findLastMoveIndex = (oldB: TCell[] | undefined, newB: TCell[]): number | n
 
 const getEmptyBoard = (size: number): TCell[] => {
   const b = Array(size).fill(".") as TCell[];
+  /*b[3 * 9 + 4] = "W";
+  b[3 * 9 + 5] = "B";
+  b[4 * 9 + 5] = "W";
+  b[4 * 9 + 4] = "B";*/
   return b;
 };
 
 export default function Board() {
   const { playerColor, level, boardEdge } = usePreferences();
+  console.log("Board Edge:", boardEdge);
 
   const BOARD_SIZE = boardEdge * boardEdge;
 
@@ -218,19 +223,15 @@ export default function Board() {
             isBoardInteractive ? "pointer-events-none" : "pointer-events-auto" + !isBoardInteractive && !isReviewMode ? " opacity-40" : ""
           }`}
         />
-        <div className={`grid grid-cols-${boardEdge} w-[270px] h-[270px] relative sm:w-[${boardEdge * 50}px] sm:h-[${boardEdge * 50}px]`}>
+        <div className={`grid grid-cols-9 w-[270px] h-[270px] relative sm:w-[450px] sm:h-[450px]`}>
           {displayBoard.map((cell, idx) => (
-            <div
-              key={idx}
-              className={`w-[${(30 * 9) / boardEdge}px] h-[${(30 * 9) / boardEdge}px] sm:w-[50px] sm:h-[50px] ${isBoardInteractive ? "cursor-pointer" : "cursor-default"}`}
-              onClick={() => handleCellClick(idx)}
-            >
+            <div key={idx} className="w-[30px] h-[30px] sm:w-[50px] sm:h-[50px] cursor-pointer" onClick={() => handleCellClick(idx)}>
               <BoardCell
                 position={getUINodePosition(boardEdge, idx)}
-                currentPlayer={isReviewMode ? (reviewBoardIndex % 2 === 0 ? "B" : "W") : currentPlayer} // Approximate player turn for review
+                currentPlayer={currentPlayer}
                 takenBy={cell}
-                isLastMove={idx === displayLastMoveIndex}
-                isCaptured={showCapturedStonesForCell(idx)}
+                isLastMove={idx === lastMoveIndex}
+                isCaptured={capturedStonesIndexes.current.includes(idx)}
               />
             </div>
           ))}
