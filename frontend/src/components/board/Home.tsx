@@ -18,7 +18,6 @@ export default function Home() {
     <TooltipProvider>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="flex flex-col items-center gap-8">
-          {/* Game intro card */}
           <Card className="w-full shadow-lg border-stone-300 bg-stone-100">
             <CardHeader className="from-stone-200 to-stone-300">
               <CardTitle className="text-2xl font-bold">Atari Go</CardTitle>
