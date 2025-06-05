@@ -7,6 +7,7 @@ import { useNavigate } from "react-router";
 import StatusMessage from "@/components/board/StatusMessage.tsx";
 import AIThinkingProgress from "@/components/board/AIThinkingProgress.tsx";
 import { ArrowLeftToLine, ArrowRightToLine } from "lucide-react";
+import Statistics from "@/components/board/Statistics.tsx";
 
 const findLastMoveIndex = (oldB: TCell[] | undefined, newB: TCell[]): number | null => {
   if (!oldB) return null; // For the very first board in history
@@ -26,8 +27,7 @@ const getEmptyBoard = (size: number): TCell[] => {
 };
 
 export default function Board() {
-  const { playerColor, level, boardEdge } = usePreferences();
-  console.log("Board Edge:", boardEdge);
+  const { playerColor, level, boardEdge, addWin, addLoss } = usePreferences();
 
   const BOARD_SIZE = boardEdge * boardEdge;
 
@@ -53,31 +53,27 @@ export default function Board() {
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [reviewBoardIndex, setReviewBoardIndex] = useState(0);
 
-  const resetGameState = useCallback(
-    (startPlayer: TPlayer = "B") => {
-      capturedStonesIndexes.current = [];
-      finalWinner.current = null;
-      setLastMoveIndex(null);
+  const resetGameState = useCallback(() => {
+    capturedStonesIndexes.current = [];
+    finalWinner.current = null;
+    setLastMoveIndex(null);
 
-      const newEmptyBoard = getEmptyBoard(BOARD_SIZE);
-      setBoard(newEmptyBoard);
-      setBoardHistory([newEmptyBoard]);
+    const newEmptyBoard = getEmptyBoard(BOARD_SIZE);
+    setBoard(newEmptyBoard);
+    setBoardHistory([newEmptyBoard]);
 
-      setGameOver(false);
-      setCurrentPlayer(startPlayer);
-      setAiThinking(false);
-      setIsReviewMode(false);
-      setReviewBoardIndex(0);
-    },
-    [BOARD_SIZE],
-  );
+    setGameOver(false);
+    setCurrentPlayer("B");
+    setAiThinking(false);
+    setIsReviewMode(false);
+    setReviewBoardIndex(0);
+  }, [BOARD_SIZE]);
 
   const togglePlayer = useCallback(() => {
     setCurrentPlayer((prev) => (prev === "B" ? "W" : "B"));
   }, []);
 
   const checkWinner = useCallback((currentBoardState: TCell[]) => {
-    console.log("checkWinner", currentBoardState);
     workerRef.current?.postMessage({ type: "checkCapture", payload: `${currentBoardState.join("")}` });
   }, []);
 
@@ -85,6 +81,10 @@ export default function Board() {
     const worker = new Worker(new URL("../../lib/wasm.worker.ts", import.meta.url), { type: "module" });
     worker.onmessage = ({ data }) => {
       const { type, payload } = data;
+      if (type === "error") {
+        console.error("Worker error:", payload);
+        return;
+      }
       if (type === "initialized") {
         setWasmLoading(false);
       }
@@ -117,12 +117,14 @@ export default function Board() {
         finalWinner.current = winner;
         setStatusMessage(<span>{`A partida terminou, as ${winner === "B" ? "pretas" : "brancas"} venceram!`}</span>);
         setAiThinking(false);
+        if (winner === playerColor) addWin();
+        else addLoss();
       }
     };
     worker.postMessage({ type: "init" });
     workerRef.current = worker;
     return () => worker.terminate();
-  }, [checkWinner, togglePlayer, gameOver]); // Added gameOver to dependencies
+  }, [checkWinner, togglePlayer]);
 
   useEffect(() => {
     if (isReviewMode) return;
@@ -195,17 +197,6 @@ export default function Board() {
   const isBoardInteractive = !isReviewMode && !wasmLoading && !gameOver && !aiThinking && !!playerColor && currentPlayer === playerColor;
 
   const displayBoard = isReviewMode ? boardHistory[reviewBoardIndex] : board;
-  const displayLastMoveIndex = isReviewMode ? (reviewBoardIndex > 0 ? findLastMoveIndex(boardHistory[reviewBoardIndex - 1], boardHistory[reviewBoardIndex]) : null) : lastMoveIndex;
-
-  const showCapturedStonesForCell = (idx: number) => {
-    if (!isReviewMode) {
-      return capturedStonesIndexes.current.includes(idx);
-    }
-    if (isReviewMode && reviewBoardIndex === boardHistory.length - 1 && gameOver) {
-      return capturedStonesIndexes.current.includes(idx);
-    }
-    return false;
-  };
 
   return (
     <div className="flex flex-col items-center gap-6">

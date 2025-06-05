@@ -7,6 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { useForm } from "react-hook-form";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { usePreferences } from "@/stores/usePreferences.ts";
+import Statistics from "@/components/board/Statistics.tsx";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -49,6 +50,9 @@ export default function Home() {
                     </FormItem>
                   )}
                 />
+                <div className="mt-16">
+                  <Statistics />
+                </div>
               </Form>
             </CardContent>
             <CardFooter className="flex justify-center border-t pt-6">
