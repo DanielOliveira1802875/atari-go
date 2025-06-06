@@ -14,8 +14,6 @@ private:
         int &minBlackLib3, int &minWhiteLib3, // Kept for potential deeper evaluation
         int &minBlackLib4, int &minWhiteLib4, // Kept for potential deeper evaluation
         int &countMinB1LibGroups, int &countMinW1LibGroups,
-        int &sumTotalBlackLib,  // Sum of all liberties for all black groups
-        int &sumTotalWhiteLib,  // Sum of all liberties for all white groups
         int &uniqueTotalBlackLib, // Count of unique black liberty points
         int &uniqueTotalWhiteLib  // Count of unique white liberty points
     );

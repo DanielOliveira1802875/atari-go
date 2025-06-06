@@ -16,10 +16,9 @@ std::vector<Board> AtariGo::generateSuccessors(const Board &state) {
     while (successorBits) {
         const int pos = popLSB(successorBits);
 
-        scored_successors.emplace_back();
+        scored_successors.emplace_back(0, state);
         auto&[score, successor] = scored_successors.back();
 
-        successor = state;
         successor.setStone(pos);
         calculateHeuristic(successor);
         score = successor.getHeuristic();
@@ -36,8 +35,8 @@ std::vector<Board> AtariGo::generateSuccessors(const Board &state) {
     std::vector<Board> successors;
     successors.reserve(scored_successors.size());
 
-    for (const auto &[fst, snd] : scored_successors) {
-        successors.push_back(snd);
+    for (auto& [score_val, board_obj] : scored_successors) {
+        successors.push_back(std::move(board_obj));
     }
     return successors;
 }
@@ -49,8 +48,6 @@ void AtariGo::computeLibertiesHeuristic(
     int &minBlackLib3, int &minWhiteLib3,
     int &minBlackLib4, int &minWhiteLib4,
     int &countMinB1LibGroups, int &countMinW1LibGroups,
-    int &sumTotalBlackLib,
-    int &sumTotalWhiteLib,
     int &uniqueTotalBlackLib,
     int &uniqueTotalWhiteLib
 ) {
@@ -63,8 +60,6 @@ void AtariGo::computeLibertiesHeuristic(
     minBlackLib1 = minBlackLib2 = minBlackLib3 = minBlackLib4 = minWhiteLib1 = minWhiteLib2 = minWhiteLib3 = minWhiteLib4 = state.getTurn() < 50 ? settings.STARTING_MIN_LIBERTIES : BOARD_SIZE;
     countMinB1LibGroups = 0;
     countMinW1LibGroups = 0;
-    sumTotalBlackLib = 0;
-    sumTotalWhiteLib = 0;
     uniqueTotalBlackLib = 0;
     uniqueTotalWhiteLib = 0;
 
@@ -78,7 +73,6 @@ void AtariGo::computeLibertiesHeuristic(
         int &minLib3 = isBlack ? minBlackLib3 : minWhiteLib3;
         int &minLib4 = isBlack ? minBlackLib4 : minWhiteLib4;
         int &countMin1 = isBlack ? countMinB1LibGroups : countMinW1LibGroups;
-        int &currentSumTotalLib = isBlack ? sumTotalBlackLib : sumTotalWhiteLib;
 
         Bitboard128 allUniqueLibsBBForColor = 0;
 
@@ -127,7 +121,6 @@ void AtariGo::computeLibertiesHeuristic(
             } else if (libs < minLib4) {
                 minLib4 = libs;
             }
-            currentSumTotalLib += libs;
         }
         if (isBlack) {
             uniqueTotalBlackLib = bitCount(allUniqueLibsBBForColor);
@@ -146,18 +139,16 @@ void AtariGo::calculateHeuristic(Board &state) {
 
     int minB1, minW1, minB2, minW2, minB3, minW3, minB4, minW4;
     int countMinB1Groups, countMinW1Groups;
-    int sumTotalBlackLib, sumTotalWhiteLib;
     int uniqueTotalBlackLib, uniqueTotalWhiteLib;
 
-    computeLibertiesHeuristic( // Assuming this function is correct and populates these vars
+    computeLibertiesHeuristic(
         state,
         minB1, minW1, minB2, minW2, minB3, minW3, minB4, minW4,
         countMinB1Groups, countMinW1Groups,
-        sumTotalBlackLib, sumTotalWhiteLib,
         uniqueTotalBlackLib, uniqueTotalWhiteLib
     );
 
-    int score = 0; // Heuristic score from White's perspective
+    int score = 0;
 
     const Player nextPlayer = state.getPlayerToMove();
     const Player currentPlayer = (nextPlayer == BLACK) ? WHITE : BLACK;
@@ -216,7 +207,6 @@ void AtariGo::calculateHeuristic(Board &state) {
     score += (minW3 - minB3) * settings.MIN_LIB_3_MULTIPLIER;
     score += (minW4 - minB4) * settings.MIN_LIB_4_MULTIPLIER;
 
-    score += (sumTotalWhiteLib - sumTotalBlackLib) * settings.TOTAL_LIB_MULTIPLIER;
     score += (uniqueTotalWhiteLib - uniqueTotalBlackLib) * settings.UNIQUE_LIB_MULTIPLIER;
 
     state.setHeuristic(score);

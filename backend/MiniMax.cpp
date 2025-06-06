@@ -145,6 +145,7 @@ public:
         if (successors.size() == 1) return successors[0];
 
         transpositionTable.clear();
+        transpositionTable.reserve(10'000'000);
         int overallBestScore = 0;
         std::vector<int> overallBestIdx;
 
