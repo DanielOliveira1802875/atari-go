@@ -54,6 +54,9 @@ private:
                     case UPPER: beta = std::min(beta, score); break;
                 }
                 if (alpha >= beta) return score;
+            } else if (std::abs(score) >= (WIN - 20)) {
+                // If the score is a win or a loss, the depth is irrelevant. The -20 accounts for the ply value.
+                return score;
             }
         }
 
