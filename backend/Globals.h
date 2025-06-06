@@ -5,13 +5,18 @@ enum Player { NO_PLAYER = 0, BLACK = 1, WHITE = 2 };
 enum Stone { Empty = 0, Black = 1, White = 2 };
 enum Bound { EXACT, LOWER, UPPER };
 
+// Compile for different board sizes
+#ifdef BOARD_EDGE_OVERRIDE
+constexpr int BOARD_EDGE = BOARD_EDGE_OVERRIDE;
+#else
 constexpr int BOARD_EDGE = 9;
+#endif
+
 constexpr int BOARD_SIZE = BOARD_EDGE * BOARD_EDGE;
 constexpr int WIN = 100'000'000;
 
 struct Settings {
     int ATARI_THREAT_SCORE = 1'000'000;
-    int ATARI_COUNT_MULTIPLIER = 10;
     int MIN_LIB_1_MULTIPLIER = 2'000;
     int MIN_LIB_2_MULTIPLIER = 200;
     int MIN_LIB_3_MULTIPLIER = 100;

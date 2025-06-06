@@ -6,8 +6,6 @@
 
 #include "BBUtils.h"
 
-
-
 std::vector<Board> AtariGo::generateSuccessors(const Board &state) {
     static std::vector<std::pair<int, Board>> scored_successors(BOARD_SIZE);
     scored_successors.clear();

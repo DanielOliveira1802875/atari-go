@@ -7,7 +7,6 @@ import { useNavigate } from "react-router";
 import StatusMessage from "@/components/board/StatusMessage.tsx";
 import AIThinkingProgress from "@/components/board/AIThinkingProgress.tsx";
 import { ArrowLeftToLine, ArrowRightToLine } from "lucide-react";
-import Statistics from "@/components/board/Statistics.tsx";
 
 const findLastMoveIndex = (oldB: TCell[] | undefined, newB: TCell[]): number | null => {
   if (!oldB) return null; // For the very first board in history
@@ -79,6 +78,12 @@ export default function Board() {
 
   useEffect(() => {
     const worker = new Worker(new URL("../../lib/wasm.worker.ts", import.meta.url), { type: "module" });
+    worker.postMessage({
+      type: "init",
+      payload: {
+        fileName: `atari_go_${boardEdge}x${boardEdge}`,
+      },
+    });
     worker.onmessage = ({ data }) => {
       const { type, payload } = data;
       if (type === "error") {
@@ -109,7 +114,6 @@ export default function Board() {
           }
           return;
         }
-        console.log("checkCaptureDone", payload);
         const [capturedIndexesStr, winnerStr] = payload.split(";");
         capturedStonesIndexes.current = capturedIndexesStr.split(",").map((index: string) => parseInt(index, 10));
         setGameOver(true);
@@ -198,6 +202,11 @@ export default function Board() {
 
   const displayBoard = isReviewMode ? boardHistory[reviewBoardIndex] : board;
 
+  let styleGridCols = `grid-cols-9`;
+  if (boardEdge === 7) styleGridCols = `grid-cols-7`;
+  let styleBigCellSize = "size-[28px] sm:size-[49px]";
+  if (boardEdge === 7) styleBigCellSize = "size-[36px] sm:size-[63px]";
+
   return (
     <div className="flex flex-col items-center gap-6">
       <div className="text-center">
@@ -208,15 +217,16 @@ export default function Board() {
         <AIThinkingProgress timeLimitMs={timeLimitMs} isThinking={aiThinking && !gameOver} />
       </div>
 
-      <div className="bg-gradient-to-br from-stone-300 to-stone-400 rounded-xl p-6 shadow-lg border relative border-stone-400 overflow-hidden">
+      <div className="bg-gradient-to-br from-stone-300 to-stone-400 rounded-xl p-4 sm:p-6 shadow-lg border relative border-stone-400 overflow-hidden">
         <div
           className={`transition-all duration-500 ease-in-out absolute top-0 bottom-0 left-0 right-0 z-20 bg-zinc-900 opacity-0 ${
             isBoardInteractive ? "pointer-events-none" : "pointer-events-auto" + !isBoardInteractive && !isReviewMode ? " opacity-40" : ""
           }`}
         />
-        <div className={`grid grid-cols-9 w-[270px] h-[270px] relative sm:w-[450px] sm:h-[450px]`}>
+        <div className={`grid ${styleGridCols} size-[252px] relative sm:size-[441px]`}>
           {displayBoard.map((cell, idx) => (
-            <div key={idx} className="w-[30px] h-[30px] sm:w-[50px] sm:h-[50px] cursor-pointer" onClick={() => handleCellClick(idx)}>
+            <div key={idx} className={`${styleBigCellSize} cursor-pointer`} onClick={() => handleCellClick(idx)}>
+              {/*{idx}*/}
               <BoardCell
                 position={getUINodePosition(boardEdge, idx)}
                 currentPlayer={currentPlayer}

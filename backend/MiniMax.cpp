@@ -108,6 +108,7 @@ public:
         std::vector<Board> strongMoves;
         const auto occupation = state.getOccupiedBits();
         for (const Bitboard128 i : STRONG_MOVE_MASK) {
+            if (i == 0) break;
             const auto index = getLSBIndex(i);
             if (state.isEmpty(index)) {
                 const auto liberties = getLibertyBits(i, occupation);

@@ -1,32 +1,54 @@
 let wasmModule: any = null;
 
-// Handle messages from the main thread
+const WASM_BASE_PATH = "/atari-go/wasm/";
+
 self.onmessage = async (event) => {
   const { type, payload } = event.data;
 
   if (type === "init") {
+    // The payload should include the WASM file name that reflects the size of the board, for example, "atari-go-9x9."
+    const { fileName } = payload;
+    if (!fileName) {
+      self.postMessage({
+        type: "error",
+        payload: "Initialization error: A 'fileName' must be provided, e.g., 'atari-go-9x9'.",
+      });
+      return;
+    }
+
     try {
-      // Define the Module configuration
       (self as any).Module = {
         locateFile: (path: string) => {
-          return `/atari-go/wasm/${path}`;
+          return `${WASM_BASE_PATH}${path}`;
         },
         onRuntimeInitialized: () => {
           wasmModule = {
             getBestMove: (self as any).Module.cwrap("getBestMove", "string", ["string"]),
             checkCapture: (self as any).Module.cwrap("checkCapture", "string", ["string"]),
           };
+          // Notify the main thread that we are ready
           self.postMessage({ type: "initialized" });
         },
+
+        // Capture and log stdout from the Wasm module
         print: (text: string) => {
           console.log("WASM stdout:", text);
         },
+
+        // Capture and log stderr from the Wasm module
         printErr: (text: string) => {
           console.error("WASM stderr:", text);
         },
       };
 
-      const response = await fetch("/atari-go/wasm/atari_go.js");
+      // Construct the full path to the Emscripten JavaScript glue code
+      const scriptPath = `${WASM_BASE_PATH}${fileName}.js`;
+
+      // Fetch the script text. This is necessary because module workers can't use importScripts().
+      const response = await fetch(scriptPath);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch script at ${scriptPath}: ${response.statusText}`);
+      }
       const scriptText = await response.text();
 
       // Execute the script in the worker context

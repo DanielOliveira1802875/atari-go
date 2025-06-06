@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { usePreferences } from "@/stores/usePreferences.ts";
 import Statistics from "@/components/board/Statistics.tsx";
+import BoardSizeSelect from "@/components/board/BoardSizeSelect.tsx";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -33,6 +34,18 @@ export default function Home() {
                       <FormLabel className={"w-36"}>Jogar com</FormLabel>
                       <FormControl>
                         <PlayerSelect />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="boardSize"
+                  render={() => (
+                    <FormItem className="mb-4 flex">
+                      <FormLabel className={"w-36"}>Tabuleiro</FormLabel>
+                      <FormControl>
+                        <BoardSizeSelect />
                       </FormControl>
                     </FormItem>
                   )}

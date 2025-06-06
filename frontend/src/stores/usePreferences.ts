@@ -32,7 +32,7 @@ type Store = {
   statistics: TStatistics;
   setLevel: (level: number) => void;
   setPlayer: (player: TPlayer) => void;
-  setBoardSize: (size: number) => void;
+  setBoardEdge: (size: number) => void;
   addWin: () => void;
   addLoss: () => void;
 };
@@ -59,8 +59,8 @@ export const usePreferences = create<Store>()((set) => ({
     set({ playerColor: player });
     localStorage.setItem("player", player);
   },
-  setBoardSize(boardSize) {
-    set({ boardEdge: boardSize });
+  setBoardEdge(boardEdge) {
+    set({ boardEdge: boardEdge });
   },
   addWin() {
     set((state) => {
