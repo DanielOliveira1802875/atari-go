@@ -148,14 +148,6 @@ public:
         const Player currentPlayer = state.getPlayerToMove();
 
         for (int depth = 1; depth <= depthLimit && !ctx.timedOut; ++depth) {
-            /*// clear transposition table but keep the wins
-            for (auto it = transpositionTable.begin(); it != transpositionTable.end();) {
-                if (std::abs(std::get<0>(it->second)) >= WIN - 20) {
-                    ++it;
-                } else {
-                    it = transpositionTable.erase(it);
-                }
-            }*/
             int bestScore = (currentPlayer == BLACK) ? INF : -INF;
             std::vector<int> bestIdx;
 

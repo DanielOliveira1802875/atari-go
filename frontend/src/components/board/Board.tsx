@@ -16,6 +16,15 @@ const findLastMoveIndex = (oldB: TCell[] | undefined, newB: TCell[]): number | n
   return null;
 };
 
+const stoneSound = new Audio("/atari-go/stone_sfx.mp3");
+
+const playStoneSound = () => {
+  stoneSound.currentTime = 0;
+  stoneSound.play().catch((error) => {
+    if (import.meta.env.DEV) console.error("Error playing sound:", error);
+  });
+};
+
 const getEmptyBoard = (size: number): TCell[] => {
   const b = Array(size).fill(".") as TCell[];
   /*b[3 * 9 + 4] = "W";
@@ -70,6 +79,7 @@ export default function Board() {
 
   const togglePlayer = useCallback(() => {
     setCurrentPlayer((prev) => (prev === "B" ? "W" : "B"));
+    playStoneSound();
   }, []);
 
   const checkWinner = useCallback((currentBoardState: TCell[]) => {
@@ -241,7 +251,7 @@ export default function Board() {
       <div>
         {!isReviewMode && (
           <>
-            <Button size="lg" onClick={() => navigate("/")} className="bg-stone-800 hover:bg-stone-950">
+            <Button disabled={wasmLoading || aiThinking} size="lg" onClick={() => navigate("/")} className="bg-stone-800 hover:bg-stone-950">
               Voltar
             </Button>
             <Button disabled={wasmLoading || aiThinking} size="lg" onClick={() => resetGameState()} className="bg-stone-800 hover:bg-stone-950 ml-4">
