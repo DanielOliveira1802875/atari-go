@@ -5,7 +5,8 @@
 #include "Board.h"
 #include "unordered_dense.h"
 
-class AtariGo {
+class AtariGo
+{
 private:
     static void computeLibertiesHeuristic(
         const Board &state,
@@ -18,9 +19,7 @@ private:
         int &uniqueTotalWhiteLib  // Count of unique white liberty points
     );
 
-
 public:
-
     static void calculateHeuristic(Board &state);
 
     [[nodiscard]] static std::vector<Board> generateSuccessors(const Board &state);
@@ -31,7 +30,6 @@ public:
     [[nodiscard]] static Bitboard128 getCapturedGroups(Board &state);
 
     static void print(Board &board);
-
 };
 
 #endif

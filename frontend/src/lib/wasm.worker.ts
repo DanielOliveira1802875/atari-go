@@ -32,12 +32,12 @@ self.onmessage = async (event) => {
 
         // Capture and log stdout from the Wasm module
         print: (text: string) => {
-          console.log("WASM stdout:", text);
+          if (import.meta.env.DEV) console.log("WASM stdout:", text);
         },
 
         // Capture and log stderr from the Wasm module
         printErr: (text: string) => {
-          console.error("WASM stderr:", text);
+          if (import.meta.env.DEV) console.error("WASM stderr:", text);
         },
       };
 

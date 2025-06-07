@@ -18,12 +18,14 @@ private:
     int heuristic;
 
     // Convert (row, col) into a single bit‐index: row-major, 0 ≤ row,col < BOARD_EDGE
-    static constexpr int pos_from_coord(const int row, const int col) { // constexpr
+    static constexpr int pos_from_coord(const int row, const int col) {
+        // constexpr
         return row * BOARD_EDGE + col;
     }
 
 public:
-    Board() : black_board(0), white_board(0), zobrist_hash(0), turn(1), isHeuristicCalculated(false), heuristic(0) { }
+    Board() : black_board(0), white_board(0), zobrist_hash(0), turn(1), isHeuristicCalculated(false), heuristic(0) {
+    }
 
     void setHeuristic(const int h) {
         heuristic = h;
@@ -38,7 +40,7 @@ public:
 
     [[nodiscard]] bool isEmpty(const int row, const int col) const { return isEmpty(pos_from_coord(row, col)); }
 
-    [[nodiscard]] static constexpr  bool isInBounds(const int row, const int col) {
+    [[nodiscard]] static constexpr bool isInBounds(const int row, const int col) {
         return row >= 0 && row < BOARD_EDGE && col >= 0 && col < BOARD_EDGE;
     }
 
@@ -50,8 +52,10 @@ public:
     [[nodiscard]] bool isEmpty(const int pos) const { return !testBit(black_board | white_board, pos); }
 
     [[nodiscard]] Stone getStone(const int pos) const {
-        if (isBlack(pos)) return Black;
-        if (isWhite(pos)) return White;
+        if (isBlack(pos))
+            return Black;
+        if (isWhite(pos))
+            return White;
         return Empty;
     }
 
@@ -59,12 +63,15 @@ public:
     [[nodiscard]] unsigned char getTurn() const { return turn; }
 
     void setStone(const int pos) {
-        if (getPlayerToMove() == BLACK) setBlack(pos);
-        else setWhite(pos);
+        if (getPlayerToMove() == BLACK)
+            setBlack(pos);
+        else
+            setWhite(pos);
     }
 
     void setBlack(const int pos) {
-        if (!isEmpty(pos)) throw std::runtime_error("Position already occupied.");
+        if (!isEmpty(pos))
+            throw std::runtime_error("Position already occupied.");
         setBit(black_board, pos);
         // XOR the Zobrist hash with the precomputed random value for Black on square `pos`
         zobrist_hash ^= ZOBRIST_TABLE[0][pos];
@@ -73,7 +80,8 @@ public:
     }
 
     void setWhite(const int pos) {
-        if (!isEmpty(pos)) throw std::runtime_error("Position already occupied.");
+        if (!isEmpty(pos))
+            throw std::runtime_error("Position already occupied.");
         setBit(white_board, pos);
         // XOR the Zobrist hash with the precomputed random value for White on square `pos`
         zobrist_hash ^= ZOBRIST_TABLE[1][pos];
@@ -84,7 +92,7 @@ public:
     [[nodiscard]] bool getIsHeuristicCalculated() const { return isHeuristicCalculated; }
 
     [[nodiscard]] int getHeuristic() const {
-        if (!isHeuristicCalculated) throw std::runtime_error("Heuristic not calculated yet.");
+        assert(isHeuristicCalculated);
         return heuristic;
     }
 

@@ -87,7 +87,7 @@ export default function Board() {
     worker.onmessage = ({ data }) => {
       const { type, payload } = data;
       if (type === "error") {
-        console.error("Worker error:", payload);
+        if (import.meta.env.DEV) console.error("Worker error:", payload);
         return;
       }
       if (type === "initialized") {

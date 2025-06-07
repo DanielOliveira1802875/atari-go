@@ -11,15 +11,14 @@ constexpr int INF = WIN * 2;
 constexpr uint64_t CHECK_INTERVAL = 10'000;
 
 inline int distanceAwareScore(const int raw, const int ply) {
-    if (raw >=  WIN) return raw - ply;   // sooner win  -> bigger value
-    if (raw <= -WIN) return raw + ply;   // later loss -> less negative
-    return raw;                          // heuristic, leave untouched
+    if (raw >= WIN) return raw - ply; // sooner win  -> bigger value
+    if (raw <= -WIN) return raw + ply; // later loss -> less negative
+    return raw; // heuristic, leave untouched
 }
 
 
 class MiniMax {
 private:
-
     // Transposition table: signature -> (score, depth, bound)
     mutable ankerl::unordered_dense::map<uint64_t, std::tuple<int, int, Bound> > transpositionTable;
 
@@ -31,7 +30,6 @@ private:
     };
 
     int minimax(const Board &state, int depth, int alpha, int beta, SearchContext &ctx, const int ply) const {
-
         // Check if the search has timed out
         if (ctx.timedOut) return 0;
 
@@ -50,8 +48,10 @@ private:
             if (storedDepth >= depth) {
                 switch (flag) {
                     case EXACT: return score;
-                    case LOWER: alpha = std::max(alpha, score); break;
-                    case UPPER: beta = std::min(beta, score); break;
+                    case LOWER: alpha = std::max(alpha, score);
+                        break;
+                    case UPPER: beta = std::min(beta, score);
+                        break;
                 }
                 if (alpha >= beta) return score;
             } else if (std::abs(score) >= (WIN - 20)) {
@@ -61,7 +61,7 @@ private:
         }
 
         // Check if the game is over or if we reached the maximum depth
-        if (depth == 0 || AtariGo::isTerminal(state))  return distanceAwareScore(state.getHeuristic(), ply);
+        if (depth == 0 || AtariGo::isTerminal(state)) return distanceAwareScore(state.getHeuristic(), ply);
 
         // Generate successors
         const auto successors = AtariGo::generateSuccessors(state);
@@ -101,16 +101,12 @@ public:
         static std::mt19937_64 rng{std::random_device{}()};
         SearchContext ctx{std::chrono::steady_clock::now(), timeLimit};
 
-        if (!state.getIsHeuristicCalculated()) {
-            throw std::runtime_error("Heuristic not calculated. Call AtariGo::calculateHeuristic() first.");
-        }
-
         std::vector<Board> successors = AtariGo::generateSuccessors(state);
 
         // For each strong move, if it is empty and has no neighbors, add it to the successors.
         std::vector<Board> strongMoves;
         const auto occupation = state.getOccupiedBits();
-        for (const Bitboard128 i : STRONG_MOVE_MASK) {
+        for (const Bitboard128 i: STRONG_MOVE_MASK) {
             if (i == 0) break;
             const auto index = getLSBIndex(i);
             if (state.isEmpty(index)) {
@@ -152,6 +148,14 @@ public:
         const Player currentPlayer = state.getPlayerToMove();
 
         for (int depth = 1; depth <= depthLimit && !ctx.timedOut; ++depth) {
+            /*// clear transposition table but keep the wins
+            for (auto it = transpositionTable.begin(); it != transpositionTable.end();) {
+                if (std::abs(std::get<0>(it->second)) >= WIN - 20) {
+                    ++it;
+                } else {
+                    it = transpositionTable.erase(it);
+                }
+            }*/
             int bestScore = (currentPlayer == BLACK) ? INF : -INF;
             std::vector<int> bestIdx;
 

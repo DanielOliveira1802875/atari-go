@@ -21,6 +21,12 @@ inline void setBit(Bitboard128 &b, int pos) noexcept {
     b |= (ONE_BIT << pos);
 }
 
+/// Clears the bit at `pos` in `bb` (0..127).
+inline void clearBit(Bitboard128 &b, int pos) noexcept {
+    assert(pos >= 0 && pos < 128);
+    b &= ~(ONE_BIT << pos);
+}
+
 /// Tests whether the bit at `pos` in `bb` is set (1).
 inline bool testBit(const Bitboard128 b, const int pos) noexcept {
     assert(pos >= 0 && pos < 128);
