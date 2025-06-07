@@ -14,17 +14,23 @@ const BoardSizeSelect = () => {
         setBoardEdge(Number(value));
       }}
     >
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-1">
         <RadioGroupItem value="9" id="edge1" />
-        <Label htmlFor="edge1">9x9</Label>
+        <Label className={"text-xs md:text-sm"} htmlFor="edge1">
+          9x9
+        </Label>
       </div>
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-1">
         <RadioGroupItem value="8" id="edge2" />
-        <Label htmlFor="edge2">8x8</Label>
+        <Label className={"text-xs md:text-sm"} htmlFor="edge2">
+          8x8
+        </Label>
       </div>
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-1">
         <RadioGroupItem value="7" id="edge3" />
-        <Label htmlFor="edge3">7x7</Label>
+        <Label className={"text-xs md:text-sm"} htmlFor="edge3">
+          7x7
+        </Label>
       </div>
     </RadioGroup>
   );

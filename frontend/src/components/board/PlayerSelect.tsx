@@ -14,13 +14,17 @@ const PlayerSelect = () => {
         setPlayer(value as TPlayer);
       }}
     >
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 text-xs md:text-sm">
         <RadioGroupItem value="W" id="playerW" />
-        <Label htmlFor="playerW">Brancas</Label>
+        <Label className={"text-xs md:text-sm"} htmlFor="playerW">
+          Brancas
+        </Label>
       </div>
       <div className="flex items-center space-x-2">
         <RadioGroupItem value="B" id="playerB" />
-        <Label htmlFor="playerB">Pretas</Label>
+        <Label className={"text-xs md:text-sm"} htmlFor="playerB">
+          Pretas
+        </Label>
       </div>
     </RadioGroup>
   );

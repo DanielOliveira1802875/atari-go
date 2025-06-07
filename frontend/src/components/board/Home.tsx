@@ -18,12 +18,12 @@ export default function Home() {
 
   return (
     <TooltipProvider>
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-4xl bg-debugging-red">
         <div className="flex flex-col items-center gap-8">
           <Card className="w-full shadow-lg border-stone-300 bg-stone-100">
             <CardHeader className="from-stone-200 to-stone-300">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center bg-gradient-to-br from-stone-200 to-stone-300 rounded-lg p-1 border border-stone-400">
+              <div className="flex gap-3 align-middle items-center">
+                <div className="flex items-center bg-gradient-to-br from-zinc-200 to-zinc-300 rounded-[4px] p-[3px] border border-zinc-500 mb-0.5">
                   <div>
                     <div className={"size-3"}>
                       <BoardCell position={"upperLeft"} currentPlayer={"B"} takenBy={"B"} hideGrid />
@@ -54,8 +54,8 @@ export default function Home() {
                   name="player"
                   render={() => (
                     <FormItem className="mb-4 flex">
-                      <FormLabel className={"w-36"}>Jogar com</FormLabel>
-                      <FormControl>
+                      <FormLabel className={"w-30 text-xs md:text-sm"}>Jogar com</FormLabel>
+                      <FormControl className="flex-1">
                         <PlayerSelect />
                       </FormControl>
                     </FormItem>
@@ -66,8 +66,8 @@ export default function Home() {
                   name="boardSize"
                   render={() => (
                     <FormItem className="mb-4 flex">
-                      <FormLabel className={"w-36"}>Tabuleiro</FormLabel>
-                      <FormControl>
+                      <FormLabel className={"w-30 text-xs md:text-sm"}>Tabuleiro</FormLabel>
+                      <FormControl className="flex-1">
                         <BoardSizeSelect />
                       </FormControl>
                     </FormItem>
@@ -78,8 +78,8 @@ export default function Home() {
                   name="level"
                   render={() => (
                     <FormItem className="mb-4 flex items-baseline">
-                      <FormLabel className={"w-36"}>{`Dificuldade ${level}`}</FormLabel>
-                      <FormControl>
+                      <FormLabel className={"w-30 text-xs md:text-sm"}>{`Dificuldade ${level}`}</FormLabel>
+                      <FormControl className="w-full">
                         <LevelSlider disabled={false} />
                       </FormControl>
                     </FormItem>
@@ -92,9 +92,9 @@ export default function Home() {
                   name="wins"
                   render={() => (
                     <FormItem className="flex items-baseline">
-                      <FormLabel className={"w-30"}>{`Vitórias`}</FormLabel>
-                      <FormControl>
-                        <span>{stats.wins}</span>
+                      <FormLabel className={"w-30 text-xs md:text-sm"}>{`Vitórias`}</FormLabel>
+                      <FormControl className="w-full">
+                        <span className={"text-xs md:text-sm"}>{stats.wins}</span>
                       </FormControl>
                     </FormItem>
                   )}
@@ -104,9 +104,9 @@ export default function Home() {
                   name="losses"
                   render={() => (
                     <FormItem className="flex items-baseline">
-                      <FormLabel className={"w-30"}>{`Derrotas`}</FormLabel>
-                      <FormControl>
-                        <span>{stats.losses}</span>
+                      <FormLabel className={"w-30 text-xs md:text-sm"}>{`Derrotas`}</FormLabel>
+                      <FormControl className="w-full">
+                        <span className={"text-xs md:text-sm"}>{stats.losses}</span>
                       </FormControl>
                     </FormItem>
                   )}
@@ -114,7 +114,7 @@ export default function Home() {
               </Form>
             </CardContent>
             <CardFooter className="flex justify-center border-t pt-6">
-              <Button size="lg" asChild className="bg-stone-800 hover:bg-stone-900">
+              <Button size="lg" asChild className="bg-stone-800 hover:bg-stone-900 w-full sm:w-auto">
                 <Link to="/play">Jogar</Link>
               </Button>
             </CardFooter>

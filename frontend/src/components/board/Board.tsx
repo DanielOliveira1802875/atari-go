@@ -27,7 +27,7 @@ const playStoneSound = () => {
 
 const getEmptyBoard = (size: number): TCell[] => {
   const b = Array(size).fill(".") as TCell[];
-  /*b[3 * 9 + 4] = "W";
+  /*  b[3 * 9 + 4] = "W";
   b[3 * 9 + 5] = "B";
   b[4 * 9 + 5] = "W";
   b[4 * 9 + 4] = "B";*/
@@ -129,7 +129,7 @@ export default function Board() {
         setGameOver(true);
         const winner = (winnerStr === "BLACK" ? "B" : "W") as TPlayer;
         finalWinner.current = winner;
-        setStatusMessage(<span>{`A partida terminou, as ${winner === "B" ? "pretas" : "brancas"} venceram!`}</span>);
+        setStatusMessage(<span>{`As ${winner === "B" ? "pretas" : "brancas"} venceram!`}</span>);
         setAiThinking(false);
         if (winner === playerColor) addWin();
         else addLoss();
@@ -146,7 +146,7 @@ export default function Board() {
 
     if (!wasmLoading && currentPlayer !== playerColor && !aiThinking) {
       setAiThinking(true);
-      setStatusMessage(<span>Aguarde pela jogada da IA...</span>);
+      setStatusMessage(<span>Aguarde...</span>);
       workerRef.current?.postMessage({ type: "getBestMove", payload: `${board.join("")};${timeLimitMs};${depthLimit}` });
     } else if (!wasmLoading && currentPlayer === playerColor && !aiThinking) {
       setStatusMessage(<span>Sua vez</span>);
@@ -183,7 +183,7 @@ export default function Board() {
     setBoard(boardHistory[boardHistory.length - 1]);
     setLastMoveIndex(findLastMoveIndex(boardHistory[boardHistory.length - 2], boardHistory[boardHistory.length - 1]));
     if (gameOver && finalWinner.current) {
-      setStatusMessage(<span>{`A partida terminou, as ${finalWinner.current === "B" ? "pretas" : "brancas"} venceram!`}</span>);
+      setStatusMessage(<span>{`As ${finalWinner.current === "B" ? "pretas" : "brancas"} venceram!`}</span>);
     } else if (!wasmLoading) {
       setStatusMessage(<span>Sua vez</span>);
     }
@@ -255,33 +255,26 @@ export default function Board() {
           ))}
         </div>
       </div>
-      <div>
+      <div className="flex items-center justify-center gap-2 mt-4">
         {!isReviewMode && (
           <>
             <Button disabled={wasmLoading || aiThinking} size="lg" onClick={() => navigate("/")} className="bg-stone-800 hover:bg-stone-950 select-none">
               Voltar
             </Button>
-            <Button
-              disabled={wasmLoading || aiThinking || boardHistory.length <= 1}
-              size="lg"
-              onClick={resetGameState}
-              className="bg-stone-800 hover:bg-stone-950 ml-4 select-none"
-            >
-              Novo Jogo
+            <Button disabled={wasmLoading || aiThinking || boardHistory.length <= 1} size="lg" onClick={resetGameState} className="bg-stone-800 hover:bg-stone-950 select-none">
+              Recomeçar
             </Button>
             {gameOver && boardHistory.length > 1 && (
-              <Button size="lg" onClick={startReview} className="bg-blue-800 hover:bg-blue-950 ml-4 select-none">
-                Rever Partida
+              <Button size="lg" onClick={startReview} className="bg-blue-800 hover:bg-blue-950 select-none">
+                Rever
               </Button>
             )}
           </>
         )}
         {isReviewMode && (
           <div className="flex items-center justify-center gap-2 flex-wrap">
-            {" "}
-            {/* Added justify-center and flex-wrap for smaller screens */}
             <Button size="lg" onClick={exitReview} className="bg-stone-800 hover:bg-stone-950 select-none">
-              Sair da Revisão
+              Sair
             </Button>
             <div className="flex gap-2 ml-2">
               <Button size="icon" onClick={() => navigateReview("prev")} disabled={reviewBoardIndex === 0} className="bg-stone-800 hover:bg-stone-950 cursor-pointer select-none">

@@ -24,7 +24,7 @@ function AppContainer(props: { className?: string }) {
   }, [setFooterHtml]);
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-bgColor text-textColor bg-gradient-to-br from-zinc-200 to-zinc-300 justify-between">
+    <div className="flex flex-col h-screen w-screen bg-bgColor text-textColor bg-gradient-to-br from-zinc-200 to-zinc-300 justify-between prose">
       <div className={cn("container px-4 m-auto", props.className)}>
         <Outlet />
       </div>
