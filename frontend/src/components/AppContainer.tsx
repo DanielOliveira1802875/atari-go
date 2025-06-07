@@ -29,7 +29,10 @@ function AppContainer(props: { className?: string }) {
         <Outlet />
       </div>
       <footer className={"flex justify-center w-screen border-t border-gray-500 flex-initial p-2 bg-zinc-300"}>
-        <div dangerouslySetInnerHTML={{ __html: footerHtml }} className="w-full text-center text-sm" />
+        <div
+          dangerouslySetInnerHTML={{ __html: footerHtml }}
+          className="w-full font-semibold text-center text-xs select-none [&_a]:text-blue-700 [&_a]:hover:underline [&_a]:cursor-pointer"
+        />
       </footer>
     </div>
   );

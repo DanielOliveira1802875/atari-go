@@ -191,6 +191,7 @@ export default function Board() {
 
   const navigateReview = (direction: "next" | "prev") => {
     let newIndex = reviewBoardIndex;
+    playStoneSound();
     if (direction === "next" && reviewBoardIndex < boardHistory.length - 1) {
       newIndex++;
     } else if (direction === "prev" && reviewBoardIndex > 0) {
@@ -209,13 +210,19 @@ export default function Board() {
   };
 
   const isBoardInteractive = !isReviewMode && !wasmLoading && !gameOver && !aiThinking && !!playerColor && currentPlayer === playerColor;
+  const showOverlay = wasmLoading || aiThinking;
 
   const displayBoard = isReviewMode ? boardHistory[reviewBoardIndex] : board;
 
-  let styleGridCols = `grid-cols-9`;
-  if (boardEdge === 7) styleGridCols = `grid-cols-7`;
-  let styleBigCellSize = "size-[28px] sm:size-[49px]";
-  if (boardEdge === 7) styleBigCellSize = "size-[36px] sm:size-[63px]";
+  const gridColClasses: { [key: number]: string } = {
+    7: "grid-cols-7",
+    8: "grid-cols-8",
+    9: "grid-cols-9",
+  };
+  const styleGridCols = gridColClasses[boardEdge] ?? "grid-cols-9";
+
+  const expectedDisplayBoardLength = boardEdge * boardEdge;
+  const safeDisplayBoard = displayBoard && displayBoard.length === expectedDisplayBoardLength ? displayBoard : getEmptyBoard(expectedDisplayBoardLength);
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -230,12 +237,12 @@ export default function Board() {
       <div className="bg-gradient-to-br from-stone-300 to-stone-400 rounded-xl p-4 sm:p-6 shadow-lg border relative border-stone-400 overflow-hidden">
         <div
           className={`transition-all duration-500 ease-in-out absolute top-0 bottom-0 left-0 right-0 z-20 bg-zinc-900 opacity-0 ${
-            isBoardInteractive ? "pointer-events-none" : "pointer-events-auto" + !isBoardInteractive && !isReviewMode ? " opacity-40" : ""
+            isBoardInteractive ? "pointer-events-none" : "pointer-events-auto" + (showOverlay ? " opacity-50" : "")
           }`}
         />
-        <div className={`grid ${styleGridCols} size-[252px] relative sm:size-[441px]`}>
-          {displayBoard.map((cell, idx) => (
-            <div key={idx} className={`${styleBigCellSize} cursor-pointer`} onClick={() => handleCellClick(idx)}>
+        <div className={`grid ${styleGridCols} size-[280px] relative sm:size-[500px]`}>
+          {safeDisplayBoard.map((cell, idx) => (
+            <div key={idx} className={`cursor-pointer`} onClick={() => handleCellClick(idx)}>
               {/*{idx}*/}
               <BoardCell
                 position={getUINodePosition(boardEdge, idx)}
@@ -251,38 +258,44 @@ export default function Board() {
       <div>
         {!isReviewMode && (
           <>
-            <Button disabled={wasmLoading || aiThinking} size="lg" onClick={() => navigate("/")} className="bg-stone-800 hover:bg-stone-950">
+            <Button disabled={wasmLoading || aiThinking} size="lg" onClick={() => navigate("/")} className="bg-stone-800 hover:bg-stone-950 select-none">
               Voltar
             </Button>
-            <Button disabled={wasmLoading || aiThinking} size="lg" onClick={() => resetGameState()} className="bg-stone-800 hover:bg-stone-950 ml-4">
-              Reiniciar
+            <Button
+              disabled={wasmLoading || aiThinking || boardHistory.length <= 1}
+              size="lg"
+              onClick={resetGameState}
+              className="bg-stone-800 hover:bg-stone-950 ml-4 select-none"
+            >
+              Novo Jogo
             </Button>
             {gameOver && boardHistory.length > 1 && (
-              <Button size="lg" onClick={startReview} className="bg-blue-800 hover:bg-blue-950 ml-4">
+              <Button size="lg" onClick={startReview} className="bg-blue-800 hover:bg-blue-950 ml-4 select-none">
                 Rever Partida
               </Button>
             )}
           </>
         )}
         {isReviewMode && (
-          <div className="flex items-center justify-between gap-2">
-            <Button size="lg" onClick={exitReview} className="bg-stone-800 hover:bg-stone-950">
-              Voltar
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            {" "}
+            {/* Added justify-center and flex-wrap for smaller screens */}
+            <Button size="lg" onClick={exitReview} className="bg-stone-800 hover:bg-stone-950 select-none">
+              Sair da Revisão
             </Button>
-            <Button size="lg" onClick={() => resetGameState()} className="bg-stone-800 hover:bg-stone-950 ml-4">
-              Reiniciar
-            </Button>
-            <Button size="icon" onClick={() => navigateReview("prev")} disabled={reviewBoardIndex === 0} className="bg-stone-800 hover:bg-stone-950 ml-4 cursor-pointer">
-              <ArrowLeftToLine className="w-4 h-4" />
-            </Button>
-            <Button
-              size="icon"
-              onClick={() => navigateReview("next")}
-              disabled={reviewBoardIndex === boardHistory.length - 1}
-              className="bg-stone-800 hover:bg-stone-950 cursor-pointer"
-            >
-              <ArrowRightToLine className="w-4 h-4" />
-            </Button>
+            <div className="flex gap-2 ml-2">
+              <Button size="icon" onClick={() => navigateReview("prev")} disabled={reviewBoardIndex === 0} className="bg-stone-800 hover:bg-stone-950 cursor-pointer select-none">
+                <ArrowLeftToLine className="w-4 h-4" />
+              </Button>
+              <Button
+                size="icon"
+                onClick={() => navigateReview("next")}
+                disabled={reviewBoardIndex === boardHistory.length - 1}
+                className="bg-stone-800 hover:bg-stone-950 cursor-pointer select-none"
+              >
+                <ArrowRightToLine className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         )}
       </div>

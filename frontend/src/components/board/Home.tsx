@@ -1,19 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import LevelSlider from "@/components/board/LevelSlider.tsx";
 import PlayerSelect from "@/components/board/PlayerSelect.tsx";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form.tsx";
 import { useForm } from "react-hook-form";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { usePreferences } from "@/stores/usePreferences.ts";
-import Statistics from "@/components/board/Statistics.tsx";
 import BoardSizeSelect from "@/components/board/BoardSizeSelect.tsx";
+import { Separator } from "../ui/separator";
+import BoardCell from "@/components/board/BoardCell.tsx";
 
 export default function Home() {
-  const navigate = useNavigate();
   const form = useForm();
-  const { level } = usePreferences();
+  const { statistics, playerColor, level, boardEdge } = usePreferences();
+  const stats = statistics[boardEdge][playerColor][level];
 
   return (
     <TooltipProvider>
@@ -21,10 +22,32 @@ export default function Home() {
         <div className="flex flex-col items-center gap-8">
           <Card className="w-full shadow-lg border-stone-300 bg-stone-100">
             <CardHeader className="from-stone-200 to-stone-300">
-              <CardTitle className="text-2xl font-bold">Atari Go</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center bg-gradient-to-br from-stone-200 to-stone-300 rounded-lg p-1 border border-stone-400">
+                  <div>
+                    <div className={"size-3"}>
+                      <BoardCell position={"upperLeft"} currentPlayer={"B"} takenBy={"B"} hideGrid />
+                    </div>
+                    <div className={"size-3"}>
+                      <BoardCell position={"lowerLeft"} currentPlayer={"W"} takenBy={"W"} hideGrid />
+                    </div>
+                  </div>
+                  <div>
+                    <div className={"size-3"}>
+                      <BoardCell position={"upperRight"} currentPlayer={"W"} takenBy={"W"} hideGrid />
+                    </div>
+                    <div className={"size-3"}>
+                      <BoardCell position={"lowerRight"} currentPlayer={"B"} takenBy={"B"} hideGrid />
+                    </div>
+                  </div>
+                </div>
+                <CardTitle className="text-4xl font-bold mb-1">Atari Go</CardTitle>
+              </div>
               <CardDescription className="text-lg">Campeonato Nacional de Jogos Matemáticos</CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent>
+              <Separator className="mb-6" />
+              <CardDescription className="mb-4 text-md font-semibold">Configuração</CardDescription>
               <Form {...form}>
                 <FormField
                   control={form.control}
@@ -62,9 +85,32 @@ export default function Home() {
                     </FormItem>
                   )}
                 />
-                <div className="mt-16">
-                  <Statistics />
-                </div>
+                <Separator className="my-6" />
+                <CardDescription className="mb-4 text-md font-semibold">Resultado da configuração atual</CardDescription>
+                <FormField
+                  control={form.control}
+                  name="wins"
+                  render={() => (
+                    <FormItem className="flex items-baseline">
+                      <FormLabel className={"w-30"}>{`Vitórias`}</FormLabel>
+                      <FormControl>
+                        <span>{stats.wins}</span>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="losses"
+                  render={() => (
+                    <FormItem className="flex items-baseline">
+                      <FormLabel className={"w-30"}>{`Derrotas`}</FormLabel>
+                      <FormControl>
+                        <span>{stats.losses}</span>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </Form>
             </CardContent>
             <CardFooter className="flex justify-center border-t pt-6">

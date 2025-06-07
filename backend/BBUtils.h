@@ -157,6 +157,14 @@ inline constexpr std::array<Bitboard128, 8> STRONG_MOVE_MASK = []() {
             m[i] = ONE_BIT << be;
         }
         return m;
+    } else if constexpr (BOARD_EDGE == 8) {
+        std::array<Bitboard128, 8> m{};
+        const int LE[] = {18, 21, 42, 45, 36};
+        for (int i = 0; i < 5; i++) {
+            const int be = 63 - LE[i];
+            m[i] = ONE_BIT << be;
+        }
+        return m;
     } else if constexpr (BOARD_EDGE == 7) {
         std::array<Bitboard128, 8> m{};
         const int LE[] = {16, 18, 30, 32};
@@ -166,7 +174,7 @@ inline constexpr std::array<Bitboard128, 8> STRONG_MOVE_MASK = []() {
         }
         return m;
     } else {
-        static_assert(BOARD_EDGE == 9 || BOARD_EDGE == 7, "Unsupported BOARD_EDGE size for STRONG_MOVE_MASK");
+        static_assert(BOARD_EDGE == 9 || BOARD_EDGE == 8 || BOARD_EDGE == 7, "Unsupported BOARD_EDGE size for STRONG_MOVE_MASK");
         return std::array<Bitboard128, 8>{};
     }
 }();
