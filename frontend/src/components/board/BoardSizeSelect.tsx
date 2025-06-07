@@ -15,16 +15,16 @@ const BoardSizeSelect = () => {
       }}
     >
       <div className="flex items-center space-x-2">
-        <RadioGroupItem value="9" id="r2" />
-        <Label htmlFor="r2">9x9</Label>
+        <RadioGroupItem value="9" id="edge1" />
+        <Label htmlFor="edge1">9x9</Label>
       </div>
       <div className="flex items-center space-x-2">
-        <RadioGroupItem value="8" id="r1" />
-        <Label htmlFor="r1">8x8</Label>
+        <RadioGroupItem value="8" id="edge2" />
+        <Label htmlFor="edge2">8x8</Label>
       </div>
       <div className="flex items-center space-x-2">
-        <RadioGroupItem value="7" id="r1" />
-        <Label htmlFor="r1">7x7</Label>
+        <RadioGroupItem value="7" id="edge3" />
+        <Label htmlFor="edge3">7x7</Label>
       </div>
     </RadioGroup>
   );

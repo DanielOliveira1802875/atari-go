@@ -15,12 +15,12 @@ const PlayerSelect = () => {
       }}
     >
       <div className="flex items-center space-x-2">
-        <RadioGroupItem value="W" id="r2" />
-        <Label htmlFor="r2">Brancas</Label>
+        <RadioGroupItem value="W" id="playerW" />
+        <Label htmlFor="playerW">Brancas</Label>
       </div>
       <div className="flex items-center space-x-2">
-        <RadioGroupItem value="B" id="r1" />
-        <Label htmlFor="r1">Pretas</Label>
+        <RadioGroupItem value="B" id="playerB" />
+        <Label htmlFor="playerB">Pretas</Label>
       </div>
     </RadioGroup>
   );
