@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import LevelSlider from "@/components/board/LevelSlider.tsx";
 import PlayerSelect from "@/components/board/PlayerSelect.tsx";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form.tsx";
@@ -68,8 +68,8 @@ export default function Home() {
               </Form>
             </CardContent>
             <CardFooter className="flex justify-center border-t pt-6">
-              <Button size="lg" onClick={() => navigate("/play")} className="bg-stone-800 hover:bg-stone-900">
-                Jogar
+              <Button size="lg" asChild className="bg-stone-800 hover:bg-stone-900">
+                <Link to="/play">Jogar</Link>
               </Button>
             </CardFooter>
           </Card>

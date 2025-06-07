@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/atari-go/",
+  base: "/atari-go",
   plugins: [react(), tailwindcss()],
   build: {
     outDir: "../docs",
