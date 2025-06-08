@@ -18,7 +18,7 @@ class MiniMax {
         uint64_t nodeCount = 0;
     };
 
-    int minimax(Board &state, const int depth, SearchContext &ctx) const {
+    int minimax(Board &state, const int depth, int alpha, int beta, SearchContext &ctx) const {
         if (ctx.timedOut) return 0;
 
         if (++ctx.nodeCount % CHECK_INTERVAL == 0) {
@@ -44,15 +44,20 @@ class MiniMax {
         int best = toMove == WHITE ? -INF : INF;
 
         for (auto &child: successors) {
-            int score = minimax(child, depth - 1, ctx);
+            int score = minimax(child, depth - 1, alpha, beta, ctx);
             if (ctx.timedOut) return 0;
 
             if (toMove == WHITE) {
                 best = std::max(best, score);
+                alpha = std::max(alpha, best);
             } else {
                 best = std::min(best, score);
+                beta = std::min(beta, best);
             }
 
+            if (alpha >= beta) {
+                break;
+            }
         }
 
         return best;
@@ -82,25 +87,26 @@ public:
             std::vector<int> bestIdx;
 
             for (int i = 0; i < static_cast<int>(successors.size()) && !ctx.timedOut; ++i) {
-                int score = minimax(successors[i], depth - 1, ctx);
-
-                if (ctx.timedOut) break;
-
+                int score;
                 if (currentPlayer == WHITE) {
+                    score = minimax(successors[i], depth - 1, bestScore, INF, ctx);
                     if (score > bestScore) {
                         bestScore = score;
                         bestIdx = {i};
                     } else if (score == bestScore) {
                         bestIdx.push_back(i);
                     }
-                } else { // currentPlayer == BLACK
-                    if (score < bestScore) {
+                } else { // BLACK
+                    score = minimax(successors[i], depth - 1, -INF, bestScore, ctx);
+                     if (score < bestScore) {
                         bestScore = score;
                         bestIdx = {i};
                     } else if (score == bestScore) {
                         bestIdx.push_back(i);
                     }
                 }
+
+                if (ctx.timedOut) break;
             }
 
             if (!ctx.timedOut && !bestIdx.empty()) {
