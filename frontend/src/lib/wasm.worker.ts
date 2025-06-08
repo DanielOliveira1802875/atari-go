@@ -7,7 +7,7 @@ self.onmessage = async (event) => {
 
   if (type === "init") {
     // The payload should include the WASM file name that reflects the size of the board, for example, "atari-go-9x9."
-    const { fileName } = payload;
+    const fileName = payload?.fileName;
     if (!fileName) {
       self.postMessage({
         type: "error",

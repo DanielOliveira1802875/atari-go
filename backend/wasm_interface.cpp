@@ -90,7 +90,7 @@ extern "C" {
         std::cout << "getBestMove called with board: " << boardStr << "\n";
         auto [board, timeLimit, maxDepth] = parseBoard(boardStr);
 
-        const MiniMax minimax;
+        MiniMax minimax;
 
         std::cout << "Calling minimax with time limit of " << timeLimit << "ms...\n";
         const Board bestMove = minimax.getBestMove(board, std::chrono::milliseconds(timeLimit), maxDepth);

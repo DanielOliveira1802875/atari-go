@@ -48,15 +48,13 @@ private:
             if (storedDepth >= depth) {
                 switch (flag) {
                     case EXACT: return score;
-                    case LOWER: alpha = std::max(alpha, score);
-                        break;
-                    case UPPER: beta = std::min(beta, score);
-                        break;
+                    case LOWER: alpha = std::max(alpha, score); break;
+                    case UPPER: beta = std::min(beta, score); break;
                 }
                 if (alpha >= beta) return score;
             } else if (std::abs(score) >= (WIN - 20)) {
                 // If the score is a win or a loss, the depth is irrelevant. The -20 accounts for the ply value.
-                return score;
+                    return score;
             }
         }
 
@@ -151,18 +149,40 @@ public:
             int bestScore = (currentPlayer == BLACK) ? INF : -INF;
             std::vector<int> bestIdx;
 
-            for (int i = 0; i < static_cast<int>(successors.size()) && !ctx.timedOut; ++i) {
+            if (!successors.empty()) {
+                bestScore = minimax(successors[0], depth - 1, -INF, INF, ctx, 0);
+                if (ctx.timedOut) break;
+                bestIdx = {0};
+            }
+
+            for (int i = 1; i < static_cast<int>(successors.size()) && !ctx.timedOut; ++i) {
                 int score;
                 if (currentPlayer == WHITE) {
-                    score = minimax(successors[i], depth - 1, bestScore - 1, INF, ctx, 0);
+                    // Scout search
+                    score = minimax(successors[i], depth - 1, bestScore -1, bestScore + 1, ctx, 0);
+                    if (score > bestScore) {
+                        // Re-search
+                        score = minimax(successors[i], depth - 1, bestScore - 1, INF, ctx, 0);
+                    }
+                } else { // BLACK
+                    // Scout search
+                    score = minimax(successors[i], depth - 1, bestScore - 1, bestScore + 1, ctx, 0);
+                    if (score < bestScore) {
+                        // Re-search
+                        score = minimax(successors[i], depth - 1, -INF, bestScore + 1, ctx, 0);
+                    }
+                }
+
+                if (ctx.timedOut) break;
+
+                if (currentPlayer == WHITE) {
                     if (score > bestScore) {
                         bestScore = score;
                         bestIdx = {i};
                     } else if (score == bestScore) {
                         bestIdx.push_back(i);
                     }
-                } else {
-                    score = minimax(successors[i], depth - 1, -INF, bestScore + 1, ctx, 0);
+                } else { // BLACK
                     if (score < bestScore) {
                         bestScore = score;
                         bestIdx = {i};
@@ -170,7 +190,6 @@ public:
                         bestIdx.push_back(i);
                     }
                 }
-                if (ctx.timedOut) break;
             }
 
             if (!ctx.timedOut && !bestIdx.empty()) {
@@ -183,6 +202,8 @@ public:
                 std::cout << "Completed depth " << depth
                         << ". Best score: " << overallBestScore
                         << ". Candidates: " << bestIdx.size()
+                        << ". Nodes: " << ctx.nodeCount
+                        << ". TT Size: " << transpositionTable.size()
                         << ". Time: " << elapsedMs << " ms\n";
 
                 if (std::abs(overallBestScore) >= WIN) break;
