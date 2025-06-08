@@ -22,7 +22,7 @@ private:
 public:
     static void calculateHeuristic(Board &state);
 
-    [[nodiscard]] static std::vector<Board> generateSuccessors(Board &state);
+    [[nodiscard]] static std::vector<Board> generateSuccessors(const Board &state);
 
     [[nodiscard]] static bool isTerminal(const Board &state);
 

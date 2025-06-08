@@ -28,17 +28,12 @@ class MiniMax {
             }
         }
 
-        if (depth == 0 || AtariGo::isTerminal(state)) {
-            AtariGo::calculateHeuristic(state);
-            return state.getHeuristic();
-        }
+        if (depth == 0 || AtariGo::isTerminal(state)) return state.getHeuristic();
 
         auto successors = AtariGo::generateSuccessors(state);
 
-        if (successors.empty()) {
-            AtariGo::calculateHeuristic(state);
-            return state.getHeuristic();
-        }
+        if (successors.empty()) return state.getHeuristic();
+
 
         const Player toMove = state.getPlayerToMove();
         int best = toMove == WHITE ? -INF : INF;
