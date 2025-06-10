@@ -28,12 +28,7 @@ function AppContainer(props: { className?: string }) {
       <div className={cn("container px-4 m-auto", props.className)}>
         <Outlet />
       </div>
-      <footer className={"flex justify-center w-screen border-t border-gray-500 flex-initial p-2 bg-zinc-300"}>
-        <div
-          dangerouslySetInnerHTML={{ __html: footerHtml }}
-          className="w-full font-semibold text-center text-xs select-none [&_a]:text-blue-700 [&_a]:hover:underline [&_a]:cursor-pointer"
-        />
-      </footer>
+      <iframe id="footer-iframe" scrolling="no" src="https://danieloliveira1802875.github.io/cnjm-footer/"></iframe>
     </div>
   );
 }

@@ -29,6 +29,8 @@
 - Completed depth 6. Best score: -2240. Candidates: 1. Nodes: 2306647. Time: 287 ms
 - Completed depth 7. Best score: 0. Candidates: 4. Nodes: 32478446. Time: 4062 ms
 
+---
+
 ## Minimax with alpha-beta pruning
 
 ### RUN 1
@@ -60,6 +62,8 @@
 - Completed depth 6. Best score: -2240. Candidates: 5. Nodes: 296451. Time: 62 ms
 - Completed depth 7. Best score: 0. Candidates: 8. Nodes: 2806695. Time: 514 ms
 - Completed depth 8. Best score: -2240. Candidates: 6. Nodes: 25200634. Time: 4958 ms
+
+---
 
 ## Minimax with alpha-beta pruning and sorted successors
 
@@ -105,6 +109,8 @@
 - Completed depth 11. Best score: 0. Candidates: 7. Nodes: 2465327. Time: 1237 ms
 - Completed depth 12. Best score: -2040. Candidates: 2. Nodes: 9223957. Time: 4057 ms
 
+---
+
 ## Minimax with alpha-beta pruning, sorted successors, and transposition table
 
 ### RUN 1
@@ -148,6 +154,8 @@
 - Completed depth 10. Best score: -2240. Candidates: 2. Nodes: 569434. TT Size: 92908. Time: 339 ms
 - Completed depth 11. Best score: 0. Candidates: 2. Nodes: 1683687. TT Size: 321208. Time: 1231 ms
 - Completed depth 12. Best score: -2040. Candidates: 1. Nodes: 4669328. TT Size: 720045. Time: 2535 ms
+
+---
 
 ## Minimax with alpha-beta pruning, sorted successors, transposition table, and pvs (principal variation search)
 

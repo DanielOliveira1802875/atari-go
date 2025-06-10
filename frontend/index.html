@@ -6,9 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script data-goatcounter="https://atari-go.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
     <title>Atari Go - CNJM</title>
+    <style>
+      #footer-iframe {
+        width: 100%;
+        border: none;
+        display: block;
+        overflow: hidden;
+
+        /* Default height for single-line view */
+        height: 30px;
+      }
+
+      /* Adjust height for two-line view on smaller screens */
+      @media (max-width: 768px) {
+        #footer-iframe {
+          height: 60px;
+        }
+      }
+    </style>
   </head>
-  <body>
-    <div id="root"></div>
+  <body style="display: flex; flex-direction: column; min-height: 100vh">
+    <div style="flex: 1" id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
