@@ -2,116 +2,119 @@
 #include <sstream>
 #include <chrono>
 #include <random>
+#include <string>
 
 #include "Board.h"
 #include "AtariGo.h"
 #include "Globals.h"
 #include "MiniMax.cpp"
 
-class Game {
-public:
-    static void run() {
-        std::mt19937_64 rng;
-        Board board;
-        AtariGo atariGo;
+Player playAIGame(const Settings &settingsPlayer1, const std::string &player1Name,
+                  const Settings &settingsPlayer2, const std::string &player2Name,
+                  bool player1PlaysBlack, int thinkingTimeMs, int maxDepth) {
+    std::cout << "\n--- New Game ---" << std::endl;
+    if (player1PlaysBlack) {
+        std::cout << player1Name << " (Black) vs " << player2Name << " (White)" << std::endl;
+    } else {
+        std::cout << player2Name << " (Black) vs " << player1Name << " (White)" << std::endl;
+    }
 
-        board.setStone(3, 5);
-        board.setStone(3, 4);
-        board.setStone(4, 4);
-        board.setStone(4, 5);
+    Board board;
+    MiniMax minimax;
+
+    settings = settingsPlayer1;
+    AtariGo::calculateHeuristic(board);
+
+    Player currentPlayerTurn = board.getPlayerToMove();
+
+    while (!AtariGo::isTerminal(board)) {
+        std::cout << "\nPlayer to move: " << (currentPlayerTurn == BLACK ? "BLACK" : "WHITE") << std::endl;
+
+        if (currentPlayerTurn == BLACK) {
+            settings = player1PlaysBlack ? settingsPlayer1 : settingsPlayer2;
+            std::cout << (player1PlaysBlack ? player1Name : player2Name) << " (BLACK) is thinking with its settings..." << std::endl;
+        } else {
+            settings = !player1PlaysBlack ? settingsPlayer1 : settingsPlayer2;
+            std::cout << (!player1PlaysBlack ? player1Name : player2Name) << " (WHITE) is thinking with its settings..." << std::endl;
+        }
+
+        board.invalidateHeuristic();
         AtariGo::calculateHeuristic(board);
-
-        constexpr Player human = BLACK;
-        constexpr Player computer = WHITE;
-        Player turn = board.getPlayerToMove();
 
         AtariGo::print(board);
 
-        while (true) {
-            AtariGo::calculateHeuristic(board);
-            AtariGo::print(board);
+        auto t0 = std::chrono::high_resolution_clock::now();
+        const Board bestMoveBoard = minimax.getBestMove(board, std::chrono::milliseconds(thinkingTimeMs), maxDepth);
+        auto t1 = std::chrono::high_resolution_clock::now();
+        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
 
-            if (AtariGo::isTerminal(board)) {
-                std::cout << "Game over. Terminal state reached.\n";
-                std::cout << (board.getHeuristic() > 0 ? "WHITE" : "BLACK") << " wins!\n";
-                break;
-            }
+        std::cout << "AI thought for " << ms << " ms." << std::endl;
 
-            if (turn == human) {
-                humanMove(board);
-                turn = computer;
-            }
-            else {
-                MiniMax minimax;
-                std::cout << "Player " << (turn == BLACK ? "BLACK" : "WHITE") << " (AI) is thinking...\n";
-                auto t0 = std::chrono::high_resolution_clock::now();
-
-                Board best = minimax.getBestMove(board, std::chrono::milliseconds(5000), 64);
-
-                auto t1 = std::chrono::high_resolution_clock::now();
-                auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
-                std::cout << "AI thought for " << ms << " ms\n";
-
-                if (best.getSignature() == board.getSignature()) {
-                     std::cout << "AI returned the same board state. Passing? Or error?\n";
-                }
-
-                board = best;
-                turn = (turn == BLACK ? WHITE : BLACK);
-            }
-        }
+        board = bestMoveBoard;
+        currentPlayerTurn = board.getPlayerToMove();
     }
 
-private:
-    static void humanMove(Board& board) {
-        int row = -1, col = -1;
-        bool validMove = false;
-
-        while (!validMove) {
-            std::cout << "Enter your move (row col) or (letter number): ";
-            std::string input;
-            std::getline(std::cin, input);
-
-            if (input.length() >= 2 && std::isalpha(input[0])) {
-                char rowChar = std::toupper(input[0]);
-                row = rowChar - 'A';
-
-                std::string colStr = input.substr(1);
-                std::istringstream iss(colStr);
-                if (!(iss >> col)) {
-                    std::cout << "Invalid column format. Please enter a row letter followed by column number (e.g., C6).\n";
-                    continue;
-                }
-                col--;
-            } else {
-                std::istringstream iss(input);
-                if (!(iss >> row >> col)) {
-                    std::cout << "Invalid format. Try either 'C 6' or 'C6' or '2 5'.\n";
-                    continue;
-                }
-            }
-
-            if (!Board::isInBounds(row, col)) {
-                std::cout << "Move out of bounds. The board is " << BOARD_EDGE << "x" << BOARD_EDGE << ".\n";
-                continue;
-            }
-
-            if (!board.isEmpty(row, col)) {
-                std::cout << "Position already occupied. Choose an empty cell.\n";
-                continue;
-            }
-
-            validMove = true;
-        }
-
-        board.setStone(row, col);
-        AtariGo::calculateHeuristic(board);
-        std::cout << "You placed a stone at (" << row << ", " << col << ")\n";
+    std::cout << "Game over. Terminal state reached." << std::endl;
+    Player winner = NO_PLAYER;
+    if (board.getHeuristic() == WIN) {
+        winner = WHITE;
+    } else if (board.getHeuristic() == -WIN) {
+        winner = BLACK;
     }
-};
 
-int main() {
-    Game::run();
-    return 0;
+    AtariGo::print(board);
+    return winner;
 }
 
+
+int main() {
+Settings settings_v1;
+settings_v1.ATARI_THREAT_SCORE = 1'000'000;         // Multiplier for atari threats (default: 1'000'000, 0 disables)
+settings_v1.MIN_LIB_1_MULTIPLIER = 2'000;           // Multiplier for the group with the fewest liberties (default: 2'000; 0 disables)
+settings_v1.MIN_LIB_2_MULTIPLIER = 200;             // Multiplier for the group with the second fewest liberties (default: 200, 0 disables)
+settings_v1.MIN_LIB_3_MULTIPLIER = 100;             // Multiplier for the group with the third fewest liberties (default: 100, 0 disables)
+settings_v1.MIN_LIB_4_MULTIPLIER = 40;              // Multiplier for the group with the fourth fewest liberties (default: 40, 0 disables)
+settings_v1.UNIQUE_LIB_MULTIPLIER = 20;             // Multiplier for unique liberties (default: 20, 0 disables)
+settings_v1.STARTING_MIN_LIBERTIES = 6;             // Starting minimum liberties for each group.
+
+Settings settings_v2;
+settings_v2.ATARI_THREAT_SCORE = 1'000'000;         // Multiplier for atari threats (default: 1'000'000, 0 disables)
+settings_v2.MIN_LIB_1_MULTIPLIER = 2'000;           // Multiplier for the group with the fewest liberties (default: 2'000; 0 disables)
+settings_v2.MIN_LIB_2_MULTIPLIER = 0;               // Multiplier for the group with the second fewest liberties (default: 200, 0 disables)
+settings_v2.MIN_LIB_3_MULTIPLIER = 0;               // Multiplier for the group with the third fewest liberties (default: 100, 0 disables)
+settings_v2.MIN_LIB_4_MULTIPLIER = 0;               // Multiplier for the group with the fourth fewest liberties (default: 40, 0 disables)
+settings_v2.UNIQUE_LIB_MULTIPLIER = 20;             // Multiplier for unique liberties (default: 20, 0 disables)
+settings_v2.STARTING_MIN_LIBERTIES = BOARD_SIZE;    // Starting minimum liberties for each group.
+
+    int player1_wins = 0;
+    int player2_wins = 0;
+    int draws = 0;
+    const int NUM_GAMES = 40;
+    const int THINK_TIME_MS = 6000;
+    const int MAX_DEPTH_SEARCH = 5;
+
+    for (int i = 0; i < NUM_GAMES; ++i) {
+        Player winner;
+        if (i % 2 == 0) {
+            winner = playAIGame(settings_v1, "AI_v1", settings_v2, "AI_v2", true, THINK_TIME_MS, MAX_DEPTH_SEARCH);
+            if (winner == BLACK) player1_wins++;
+            else if (winner == WHITE) player2_wins++;
+            else draws++;
+        } else {
+            winner = playAIGame(settings_v1, "AI_v1", settings_v2, "AI_v2", false, THINK_TIME_MS, MAX_DEPTH_SEARCH);
+            if (winner == WHITE) player1_wins++;
+            else if (winner == BLACK) player2_wins++;
+            else draws++;
+        }
+    }
+
+    std::cout << "\n--- Tournament Results ---" << std::endl;
+    std::cout << "AI_v1 Wins: " << player1_wins << std::endl;
+    std::cout << "AI_v2 Wins: " << player2_wins << std::endl;
+    std::cout << "Draws: " << draws << std::endl;
+    std::cout << "\nPress Enter to exit..." << std::endl; // Added
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cin.get();
+
+    return 0;
+}

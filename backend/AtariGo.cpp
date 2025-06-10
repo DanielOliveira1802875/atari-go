@@ -56,7 +56,7 @@ void AtariGo::computeLibertiesHeuristic(
     const Bitboard128 occupiedBits = blackBitboard | whiteBitboard;
 
     // Initialize output parameters that are summed or counted
-    minBlackLib1 = minBlackLib2 = minBlackLib3 = minBlackLib4 = minWhiteLib1 = minWhiteLib2 = minWhiteLib3 = minWhiteLib4 = state.getTurn() < 50 ? STARTING_MIN_LIBERTIES : BOARD_SIZE;
+    minBlackLib1 = minBlackLib2 = minBlackLib3 = minBlackLib4 = minWhiteLib1 = minWhiteLib2 = minWhiteLib3 = minWhiteLib4 = state.getTurn() < 50 ? settings.STARTING_MIN_LIBERTIES : BOARD_SIZE;
     countMinB1LibGroups = 0;
     countMinW1LibGroups = 0;
     uniqueTotalBlackLib = 0;
@@ -147,6 +147,14 @@ void AtariGo::calculateHeuristic(Board &state) {
         uniqueTotalBlackLib, uniqueTotalWhiteLib);
 
     int score = 0;
+    if (settings.STARTING_MIN_LIBERTIES != BOARD_SIZE) {
+        minB2 = minB2 == BOARD_SIZE ? settings.STARTING_MIN_LIBERTIES : minB2;
+        minW2 = minW2 == BOARD_SIZE ? settings.STARTING_MIN_LIBERTIES : minW2;
+        minB3 = minB3 == BOARD_SIZE ? settings.STARTING_MIN_LIBERTIES : minB3;
+        minW3 = minW3 == BOARD_SIZE ? settings.STARTING_MIN_LIBERTIES : minW3;
+        minB4 = minB4 == BOARD_SIZE ? settings.STARTING_MIN_LIBERTIES : minB4;
+        minW4 = minW4 == BOARD_SIZE ? settings.STARTING_MIN_LIBERTIES : minW4;
+    }
 
     const Player nextPlayer = state.getPlayerToMove();
     const Player currentPlayer = (nextPlayer == BLACK) ? WHITE : BLACK;
@@ -182,32 +190,32 @@ void AtariGo::calculateHeuristic(Board &state) {
     if (currentPlayer == BLACK) {
         if (minB1 == 1) {
             // Black in atari; White will capture next.
-            score += ATARI_THREAT_SCORE * (countMinB1Groups);
+            score += settings.ATARI_THREAT_SCORE * (countMinB1Groups);
         } else if (minW1 == 1) {
             // White in atari.
-            score -= ATARI_THREAT_SCORE * (countMinW1Groups);
+            score -= settings.ATARI_THREAT_SCORE * (countMinW1Groups);
         }
     } else {
         // currentPlayer == WHITE
         if (minW1 == 1) {
             // White in atari; Black will capture next.
-            score -= ATARI_THREAT_SCORE * (countMinW1Groups);
+            score -= settings.ATARI_THREAT_SCORE * (countMinW1Groups);
         } else if (minB1 == 1) {
             // Black in atari.
-            score += ATARI_THREAT_SCORE * (countMinB1Groups);
+            score += settings.ATARI_THREAT_SCORE * (countMinB1Groups);
         }
     }
 
     if (minW1 > 1 && minB1 > 1) {
         // Both groups have more than 1 liberty, evaluate based on liberties.
-        score += (minW1 - minB1) * MIN_LIB_1_MULTIPLIER;
+        score += (minW1 - minB1) * settings.MIN_LIB_1_MULTIPLIER;
     }
 
-    score += (minW2 - minB2) * MIN_LIB_2_MULTIPLIER;
-    score += (minW3 - minB3) * MIN_LIB_3_MULTIPLIER;
-    score += (minW4 - minB4) * MIN_LIB_4_MULTIPLIER;
+    score += (minW2 - minB2) * settings.MIN_LIB_2_MULTIPLIER;
+    score += (minW3 - minB3) * settings.MIN_LIB_3_MULTIPLIER;
+    score += (minW4 - minB4) * settings.MIN_LIB_4_MULTIPLIER;
 
-    score += (uniqueTotalWhiteLib - uniqueTotalBlackLib) * UNIQUE_LIB_MULTIPLIER;
+    score += (uniqueTotalWhiteLib - uniqueTotalBlackLib) * settings.UNIQUE_LIB_MULTIPLIER;
 
     state.setHeuristic(score);
 }
