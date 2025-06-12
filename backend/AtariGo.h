@@ -11,9 +11,6 @@ private:
     static void computeLibertiesHeuristic(
         const Board &state,
         int &minBlackLib1, int &minWhiteLib1,
-        int &minBlackLib2, int &minWhiteLib2,
-        int &minBlackLib3, int &minWhiteLib3, // Kept for potential deeper evaluation
-        int &minBlackLib4, int &minWhiteLib4, // Kept for potential deeper evaluation
         int &countMinB1LibGroups, int &countMinW1LibGroups,
         int &uniqueTotalBlackLib, // Count of unique black liberty points
         int &uniqueTotalWhiteLib  // Count of unique white liberty points

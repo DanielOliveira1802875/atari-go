@@ -14,15 +14,10 @@ constexpr int BOARD_EDGE = 9;
 
 constexpr int BOARD_SIZE = BOARD_EDGE * BOARD_EDGE;
 constexpr int WIN = 100'000'000;
-
 constexpr int  ATARI_THREAT_SCORE = 1'000'000;
-constexpr int  MIN_LIB_1_MULTIPLIER = 2'000;
-constexpr int  MIN_LIB_2_MULTIPLIER = 200;
-constexpr int  MIN_LIB_3_MULTIPLIER = 100;
-constexpr int  MIN_LIB_4_MULTIPLIER = 40;
+constexpr int  MIN_LIB_MULTIPLIER = 2'000;
 constexpr int  UNIQUE_LIB_MULTIPLIER = 20;
-constexpr int  SUCCESSOR_TRUNCATION_THRESHOLD = 1'000;
-constexpr int  STARTING_MIN_LIBERTIES = 6;
+constexpr int  STARTING_MIN_LIBERTIES = BOARD_SIZE;
 
 // 128-bit unsigned integer type
 using Bitboard128 = unsigned __int128;
