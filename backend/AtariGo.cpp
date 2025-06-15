@@ -20,7 +20,7 @@ std::vector<Board> AtariGo::generateSuccessors(const Board &state) {
         auto &[score, successor] = scored_successors.back();
 
         successor.setStone(pos);
-        calculateHeuristic(successor);
+        computeHeuristic(successor);
         score = successor.getHeuristic();
     }
 
@@ -41,12 +41,9 @@ std::vector<Board> AtariGo::generateSuccessors(const Board &state) {
     return successors;
 }
 
-void AtariGo::computeLibertiesHeuristic(
+void AtariGo::computeLiberties(
     const Board &state,
     int &minBlackLib1, int &minWhiteLib1,
-    int &minBlackLib2, int &minWhiteLib2,
-    int &minBlackLib3, int &minWhiteLib3,
-    int &minBlackLib4, int &minWhiteLib4,
     int &countMinB1LibGroups, int &countMinW1LibGroups,
     int &uniqueTotalBlackLib,
     int &uniqueTotalWhiteLib) {
@@ -56,7 +53,7 @@ void AtariGo::computeLibertiesHeuristic(
     const Bitboard128 occupiedBits = blackBitboard | whiteBitboard;
 
     // Initialize output parameters that are summed or counted
-    minBlackLib1 = minBlackLib2 = minBlackLib3 = minBlackLib4 = minWhiteLib1 = minWhiteLib2 = minWhiteLib3 = minWhiteLib4 = state.getTurn() < 50 ? settings.STARTING_MIN_LIBERTIES : BOARD_SIZE;
+    minBlackLib1 = minWhiteLib1 = settings.STARTING_MIN_LIBERTIES;
     countMinB1LibGroups = 0;
     countMinW1LibGroups = 0;
     uniqueTotalBlackLib = 0;
@@ -67,9 +64,6 @@ void AtariGo::computeLibertiesHeuristic(
         // Which bitboard and accumulators to use
         const Bitboard128 stoneBits = isBlack ? blackBitboard : whiteBitboard;
         int &minLib1 = isBlack ? minBlackLib1 : minWhiteLib1;
-        int &minLib2 = isBlack ? minBlackLib2 : minWhiteLib2;
-        int &minLib3 = isBlack ? minBlackLib3 : minWhiteLib3;
-        int &minLib4 = isBlack ? minBlackLib4 : minWhiteLib4;
         int &countMin1 = isBlack ? countMinB1LibGroups : countMinW1LibGroups;
 
         Bitboard128 allUniqueLibsBBForColor = 0;
@@ -92,32 +86,10 @@ void AtariGo::computeLibertiesHeuristic(
             allUniqueLibsBBForColor |= libsBB; // Accumulate unique liberties for this color
 
             if (libs < minLib1) {
-                minLib4 = minLib3;
-                minLib3 = minLib2;
-                minLib2 = minLib1;
                 minLib1 = libs;
                 countMin1 = 1;
             } else if (libs == minLib1) {
                 countMin1++;
-                if (libs < minLib2) {
-                    minLib4 = minLib3;
-                    minLib3 = minLib2;
-                    minLib2 = libs;
-                } else if (libs < minLib3) {
-                    minLib4 = minLib3;
-                    minLib3 = libs;
-                } else if (libs < minLib4) {
-                    minLib4 = libs;
-                }
-            } else if (libs < minLib2) {
-                minLib4 = minLib3;
-                minLib3 = minLib2;
-                minLib2 = libs;
-            } else if (libs < minLib3) {
-                minLib4 = minLib3;
-                minLib3 = libs;
-            } else if (libs < minLib4) {
-                minLib4 = libs;
             }
         }
         if (isBlack) {
@@ -132,29 +104,21 @@ void AtariGo::computeLibertiesHeuristic(
     floodColor(whiteBitboard, false);
 }
 
-void AtariGo::calculateHeuristic(Board &state) {
+void AtariGo::computeHeuristic(Board &state) {
     if (state.getIsHeuristicCalculated())
         return;
 
-    int minB1, minW1, minB2, minW2, minB3, minW3, minB4, minW4;
+    int minB1, minW1;
     int countMinB1Groups, countMinW1Groups;
     int uniqueTotalBlackLib, uniqueTotalWhiteLib;
 
-    computeLibertiesHeuristic(
+    computeLiberties(
         state,
-        minB1, minW1, minB2, minW2, minB3, minW3, minB4, minW4,
+        minB1, minW1,
         countMinB1Groups, countMinW1Groups,
         uniqueTotalBlackLib, uniqueTotalWhiteLib);
 
     int score = 0;
-    if (settings.STARTING_MIN_LIBERTIES != BOARD_SIZE) {
-        minB2 = minB2 == BOARD_SIZE ? settings.STARTING_MIN_LIBERTIES : minB2;
-        minW2 = minW2 == BOARD_SIZE ? settings.STARTING_MIN_LIBERTIES : minW2;
-        minB3 = minB3 == BOARD_SIZE ? settings.STARTING_MIN_LIBERTIES : minB3;
-        minW3 = minW3 == BOARD_SIZE ? settings.STARTING_MIN_LIBERTIES : minW3;
-        minB4 = minB4 == BOARD_SIZE ? settings.STARTING_MIN_LIBERTIES : minB4;
-        minW4 = minW4 == BOARD_SIZE ? settings.STARTING_MIN_LIBERTIES : minW4;
-    }
 
     const Player nextPlayer = state.getPlayerToMove();
     const Player currentPlayer = (nextPlayer == BLACK) ? WHITE : BLACK;
@@ -190,30 +154,26 @@ void AtariGo::calculateHeuristic(Board &state) {
     if (currentPlayer == BLACK) {
         if (minB1 == 1) {
             // Black in atari; White will capture next.
-            score += settings.ATARI_THREAT_SCORE * (countMinB1Groups);
+            score += settings.ATARI_THREAT_MULTIPLIER * (countMinB1Groups);
         } else if (minW1 == 1) {
             // White in atari.
-            score -= settings.ATARI_THREAT_SCORE * (countMinW1Groups);
+            score -= settings.ATARI_THREAT_MULTIPLIER * (countMinW1Groups);
         }
     } else {
         // currentPlayer == WHITE
         if (minW1 == 1) {
             // White in atari; Black will capture next.
-            score -= settings.ATARI_THREAT_SCORE * (countMinW1Groups);
+            score -= settings.ATARI_THREAT_MULTIPLIER * (countMinW1Groups);
         } else if (minB1 == 1) {
             // Black in atari.
-            score += settings.ATARI_THREAT_SCORE * (countMinB1Groups);
+            score += settings.ATARI_THREAT_MULTIPLIER * (countMinB1Groups);
         }
     }
 
     if (minW1 > 1 && minB1 > 1) {
         // Both groups have more than 1 liberty, evaluate based on liberties.
-        score += (minW1 - minB1) * settings.MIN_LIB_1_MULTIPLIER;
+        score += (minW1 - minB1) * settings.MIN_LIB_MULTIPLIER;
     }
-
-    score += (minW2 - minB2) * settings.MIN_LIB_2_MULTIPLIER;
-    score += (minW3 - minB3) * settings.MIN_LIB_3_MULTIPLIER;
-    score += (minW4 - minB4) * settings.MIN_LIB_4_MULTIPLIER;
 
     score += (uniqueTotalWhiteLib - uniqueTotalBlackLib) * settings.UNIQUE_LIB_MULTIPLIER;
 
@@ -221,7 +181,7 @@ void AtariGo::calculateHeuristic(Board &state) {
 }
 
 Bitboard128 AtariGo::getCapturedGroups(Board &state) {
-    calculateHeuristic(state);
+    computeHeuristic(state);
     const int heuristic = state.getHeuristic();
     if (heuristic > -WIN && heuristic < WIN)
         return 0;

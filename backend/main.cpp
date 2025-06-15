@@ -23,7 +23,7 @@ Player playAIGame(const Settings &settingsPlayer1, const std::string &player1Nam
     MiniMax minimax;
 
     settings = settingsPlayer1;
-    AtariGo::calculateHeuristic(board);
+    AtariGo::computeHeuristic(board);
 
     Player currentPlayerTurn = board.getPlayerToMove();
 
@@ -39,7 +39,7 @@ Player playAIGame(const Settings &settingsPlayer1, const std::string &player1Nam
         }
 
         board.invalidateHeuristic();
-        AtariGo::calculateHeuristic(board);
+        AtariGo::computeHeuristic(board);
 
         AtariGo::print(board);
 
@@ -69,20 +69,14 @@ Player playAIGame(const Settings &settingsPlayer1, const std::string &player1Nam
 
 int main() {
 Settings settings_v1;
-settings_v1.ATARI_THREAT_SCORE = 1'000'000;         // Multiplier for atari threats (default: 1'000'000, 0 disables)
-settings_v1.MIN_LIB_1_MULTIPLIER = 2'000;           // Multiplier for the group with the fewest liberties (default: 2'000; 0 disables)
-settings_v1.MIN_LIB_2_MULTIPLIER = 200;             // Multiplier for the group with the second fewest liberties (default: 200, 0 disables)
-settings_v1.MIN_LIB_3_MULTIPLIER = 100;             // Multiplier for the group with the third fewest liberties (default: 100, 0 disables)
-settings_v1.MIN_LIB_4_MULTIPLIER = 40;              // Multiplier for the group with the fourth fewest liberties (default: 40, 0 disables)
+settings_v1.ATARI_THREAT_MULTIPLIER = 1'000'000;    // Multiplier for atari threats (default: 1'000'000, 0 disables)
+settings_v1.MIN_LIB_MULTIPLIER = 2'000;             // Multiplier for the group with the fewest liberties (default: 2'000; 0 disables)
 settings_v1.UNIQUE_LIB_MULTIPLIER = 20;             // Multiplier for unique liberties (default: 20, 0 disables)
 settings_v1.STARTING_MIN_LIBERTIES = 6;             // Starting minimum liberties for each group.
 
 Settings settings_v2;
-settings_v2.ATARI_THREAT_SCORE = 1'000'000;         // Multiplier for atari threats (default: 1'000'000, 0 disables)
-settings_v2.MIN_LIB_1_MULTIPLIER = 2'000;           // Multiplier for the group with the fewest liberties (default: 2'000; 0 disables)
-settings_v2.MIN_LIB_2_MULTIPLIER = 0;               // Multiplier for the group with the second fewest liberties (default: 200, 0 disables)
-settings_v2.MIN_LIB_3_MULTIPLIER = 0;               // Multiplier for the group with the third fewest liberties (default: 100, 0 disables)
-settings_v2.MIN_LIB_4_MULTIPLIER = 0;               // Multiplier for the group with the fourth fewest liberties (default: 40, 0 disables)
+settings_v2.ATARI_THREAT_MULTIPLIER = 1'000'000;    // Multiplier for atari threats (default: 1'000'000, 0 disables)
+settings_v2.MIN_LIB_MULTIPLIER = 2'000;             // Multiplier for the group with the fewest liberties (default: 2'000; 0 disables)
 settings_v2.UNIQUE_LIB_MULTIPLIER = 20;             // Multiplier for unique liberties (default: 20, 0 disables)
 settings_v2.STARTING_MIN_LIBERTIES = BOARD_SIZE;    // Starting minimum liberties for each group.
 
@@ -91,7 +85,7 @@ settings_v2.STARTING_MIN_LIBERTIES = BOARD_SIZE;    // Starting minimum libertie
     int draws = 0;
     const int NUM_GAMES = 40;
     const int THINK_TIME_MS = 6000;
-    const int MAX_DEPTH_SEARCH = 5;
+    const int MAX_DEPTH_SEARCH = 1;
 
     for (int i = 0; i < NUM_GAMES; ++i) {
         Player winner;
