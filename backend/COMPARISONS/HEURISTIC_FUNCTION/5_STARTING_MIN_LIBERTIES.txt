@@ -1,0 +1,16 @@
+Settings settings_v1;
+settings_v1.ATARI_THREAT_MULTIPLIER = 1'000'000;    // Multiplier for atari threats (default: 1'000'000, 0 disables)
+settings_v1.MIN_LIB_MULTIPLIER = 2'000;             // Multiplier for the group with the fewest liberties (default: 2'000; 0 disables)
+settings_v1.UNIQUE_LIB_MULTIPLIER = 20;             // Multiplier for unique liberties (default: 20, 0 disables)
+settings_v1.STARTING_MIN_LIBERTIES = 6;             // Starting minimum liberties for each group.
+
+Settings settings_v2;
+settings_v2.ATARI_THREAT_MULTIPLIER = 1'000'000;    // Multiplier for atari threats (default: 1'000'000, 0 disables)
+settings_v2.MIN_LIB_MULTIPLIER = 2'000;             // Multiplier for the group with the fewest liberties (default: 2'000; 0 disables)
+settings_v2.UNIQUE_LIB_MULTIPLIER = 20;              // Multiplier for unique liberties (default: 20, 0 disables)
+settings_v2.STARTING_MIN_LIBERTIES = BOARD_EDGE;    // Starting minimum liberties for each group.
+
+--- Results ---
+AI_v1 Wins: 20
+AI_v2 Wins: 20
+Draws: 0
