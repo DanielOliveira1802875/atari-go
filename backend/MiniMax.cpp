@@ -6,7 +6,7 @@
 #include "AtariGo.h"
 
 
-inline Player opponent(Player p) { return p == BLACK ? WHITE : BLACK; }
+inline Player opponent(const Player p) { return p == BLACK ? WHITE : BLACK; }
 constexpr int INF = WIN * 2;
 constexpr uint64_t CHECK_INTERVAL = 10'000;
 
@@ -101,10 +101,10 @@ public:
 
         std::vector<Board> successors = AtariGo::generateSuccessors(state);
 
-        // For each strong move, if it is empty and has no neighbors, add it to the successors.
-        std::vector<Board> strongMoves;
+        // For each opening move, if it is empty and has no neighbors, add it to the successors.
+        std::vector<Board> openingMoves;
         const auto occupation = state.getOccupiedBits();
-        for (const Bitboard128 i: STRONG_MOVE_MASK) {
+        for (const Bitboard128 i: OPENING_MOVE_MASK) {
             if (i == 0) break;
             const auto index = getLSBIndex(i);
             if (state.isEmpty(index)) {
@@ -112,22 +112,22 @@ public:
                 if (bitCount(liberties) != 4) continue;
                 auto successor = state;
                 successor.setStone(index);
-                AtariGo::calculateHeuristic(successor);
-                strongMoves.push_back(successor);
+                AtariGo::computeHeuristic(successor);
+                openingMoves.push_back(successor);
             }
         }
 
-        // add a random strong move to the successors
-        if (!strongMoves.empty()) {
-            std::uniform_int_distribution<int> dist(0, strongMoves.size() - 1);
-            successors.push_back(strongMoves[dist(rng)]);
+        // add a random opening move to the successors
+        if (!openingMoves.empty()) {
+            std::uniform_int_distribution<int> dist(0, openingMoves.size() - 1);
+            successors.push_back(openingMoves[dist(rng)]);
         }
 
-        // allways add the center
+        // always add the center
         if (state.isEmpty(BOARD_EDGE / 2, BOARD_EDGE / 2)) {
             Board center = state;
             center.setStone(BOARD_EDGE / 2, BOARD_EDGE / 2);
-            AtariGo::calculateHeuristic(center);
+            AtariGo::computeHeuristic(center);
             successors.push_back(center);
         }
 
@@ -146,45 +146,41 @@ public:
         const Player currentPlayer = state.getPlayerToMove();
 
         for (int depth = 1; depth <= depthLimit && !ctx.timedOut; ++depth) {
-            int bestScore = (currentPlayer == BLACK) ? INF : -INF;
+            int bestScore = (currentPlayer == BLACK) ? INF : -INF; // For WHITE (Maximizer) this is alpha, for BLACK (Minimizer) this is beta
             std::vector<int> bestIdx;
 
+            // Process the first successor
             if (!successors.empty()) {
+                // For the first child, use a full alpha-beta window
                 bestScore = minimax(successors[0], depth - 1, -INF, INF, ctx, 0);
                 if (ctx.timedOut) break;
                 bestIdx = {0};
             }
 
+            // Process remaining successors
             for (int i = 1; i < static_cast<int>(successors.size()) && !ctx.timedOut; ++i) {
                 int score;
                 if (currentPlayer == WHITE) {
-                    // Scout search
-                    score = minimax(successors[i], depth - 1, bestScore -1, bestScore + 1, ctx, 0);
-                    if (score > bestScore) {
-                        // Re-search
-                        score = minimax(successors[i], depth - 1, bestScore - 1, INF, ctx, 0);
-                    }
+                    // Alpha is the bestScore found so far from previous siblings, Beta is INF
+                    score = minimax(successors[i], depth - 1, bestScore, INF, ctx, 0);
                 } else { // BLACK
-                    // Scout search
-                    score = minimax(successors[i], depth - 1, bestScore - 1, bestScore + 1, ctx, 0);
-                    if (score < bestScore) {
-                        // Re-search
-                        score = minimax(successors[i], depth - 1, -INF, bestScore + 1, ctx, 0);
-                    }
+                    // Alpha is -INF, Beta is the bestScore found so far from previous siblings
+                    score = minimax(successors[i], depth - 1, -INF, bestScore, ctx, 0);
                 }
 
                 if (ctx.timedOut) break;
 
+                // Update best score and best move(s) for the current depth
                 if (currentPlayer == WHITE) {
                     if (score > bestScore) {
-                        bestScore = score;
+                        bestScore = score; // Update alpha
                         bestIdx = {i};
                     } else if (score == bestScore) {
                         bestIdx.push_back(i);
                     }
                 } else { // BLACK
                     if (score < bestScore) {
-                        bestScore = score;
+                        bestScore = score; // Update beta
                         bestIdx = {i};
                     } else if (score == bestScore) {
                         bestIdx.push_back(i);
@@ -212,7 +208,13 @@ public:
 
         if (overallBestIdx.empty()) {
             std::cerr << "Error: No best move identified after search. Returning first successor.\n";
+            // Fallback to first successor if search was interrupted early or no valid moves found by search logic
+            if (!successors.empty()) {
             return successors[0];
+        }
+            // If successors is also empty (should be caught earlier, but as a safeguard)
+            std::cerr << "Critical Error: No successors and overallBestIdx is empty. Returning original state.\n";
+            return state;
         }
 
         std::uniform_int_distribution<int> dist(0, overallBestIdx.size() - 1);
