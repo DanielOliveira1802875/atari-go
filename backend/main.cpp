@@ -19,7 +19,7 @@ public:
         board.setStone(3, 4);
         board.setStone(4, 4);
         board.setStone(4, 5);
-        AtariGo::calculateHeuristic(board);
+        AtariGo::computeHeuristic(board);
 
         constexpr Player human = BLACK;
         constexpr Player computer = WHITE;
@@ -28,7 +28,7 @@ public:
         AtariGo::print(board);
 
         while (true) {
-            AtariGo::calculateHeuristic(board);
+            AtariGo::computeHeuristic(board);
             AtariGo::print(board);
 
             if (AtariGo::isTerminal(board)) {
@@ -105,7 +105,7 @@ private:
         }
 
         board.setStone(row, col);
-        AtariGo::calculateHeuristic(board);
+        AtariGo::computeHeuristic(board);
         std::cout << "You placed a stone at (" << row << ", " << col << ")\n";
     }
 };

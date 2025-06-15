@@ -21,7 +21,7 @@ std::vector<Board> AtariGo::generateSuccessors(const Board &state) {
         auto &[score, successor] = scored_successors.back();
 
         successor.setStone(pos);
-        calculateHeuristic(successor);
+        computeHeuristic(successor);
         score = successor.getHeuristic();
     }
 
@@ -42,7 +42,7 @@ std::vector<Board> AtariGo::generateSuccessors(const Board &state) {
     return successors;
 }
 
-void AtariGo::computeLibertiesHeuristic(
+void AtariGo::computeLiberties(
     const Board &state,
     int &minBlackLib1, int &minWhiteLib1,
     int &countMinB1LibGroups, int &countMinW1LibGroups,
@@ -105,7 +105,7 @@ void AtariGo::computeLibertiesHeuristic(
     floodColor(whiteBitboard, false);
 }
 
-void AtariGo::calculateHeuristic(Board &state) {
+void AtariGo::computeHeuristic(Board &state) {
     if (state.getIsHeuristicCalculated())
         return;
 
@@ -113,7 +113,7 @@ void AtariGo::calculateHeuristic(Board &state) {
     int countMinB1Groups, countMinW1Groups;
     int uniqueTotalBlackLib, uniqueTotalWhiteLib;
 
-    computeLibertiesHeuristic(
+    computeLiberties(
         state,
         minB1, minW1,
         countMinB1Groups, countMinW1Groups,
@@ -182,7 +182,7 @@ void AtariGo::calculateHeuristic(Board &state) {
 }
 
 Bitboard128 AtariGo::getCapturedGroups(Board &state) {
-    calculateHeuristic(state);
+    computeHeuristic(state);
     const int heuristic = state.getHeuristic();
     if (heuristic > -WIN && heuristic < WIN)
         return 0;
