@@ -1,44 +1,25 @@
 #include "AtariGo.h"
 #include <iostream>
-#include <algorithm>
 #include <complex>
-#include <utility>
 #include <queue>
-
 #include "BBUtils.h"
 
 std::vector<Board> AtariGo::generateSuccessors(const Board &state) {
-    static std::vector<std::pair<int, Board> > scored_successors(BOARD_SIZE);
-    scored_successors.clear();
-
+    std::vector<Board> successors;
     const Bitboard128 occupiedBits = state.getBlackBits() | state.getWhiteBits();
     Bitboard128 successorBits = getNeighbourBits(occupiedBits);
+    successors.reserve(bitCount(successorBits));
 
     while (successorBits) {
         const int pos = popLSB(successorBits);
 
-        scored_successors.emplace_back(0, state);
-        auto &[score, successor] = scored_successors.back();
-
+        Board successor = state;
         successor.setStone(pos);
         computeHeuristic(successor);
-        score = successor.getHeuristic();
+
+        successors.push_back(successor);
     }
 
-    if (state.getPlayerToMove() == BLACK) {
-        std::sort(scored_successors.begin(), scored_successors.end(),
-                  [](const auto &a, const auto &b) { return a.first < b.first; });
-    } else {
-        std::sort(scored_successors.begin(), scored_successors.end(),
-                  [](const auto &a, const auto &b) { return a.first > b.first; });
-    }
-
-    std::vector<Board> successors;
-    successors.reserve(scored_successors.size());
-
-    for (auto &[score_val, board_obj]: scored_successors) {
-        successors.push_back(std::move(board_obj));
-    }
     return successors;
 }
 

@@ -2,7 +2,6 @@
 #include <iostream>
 #include <random>
 #include <chrono>
-#include "unordered_dense.h"
 #include "AtariGo.h"
 
 
@@ -19,9 +18,6 @@ inline int distanceAwareScore(const int raw, const int ply) {
 
 class MiniMax {
 private:
-    // Transposition table: signature -> (score, depth, bound)
-    mutable ankerl::unordered_dense::map<uint64_t, std::tuple<int, int, Bound> > transpositionTable;
-
     struct SearchContext {
         const std::chrono::steady_clock::time_point start;
         const std::chrono::milliseconds timeLimit;
@@ -41,23 +37,6 @@ private:
             }
         }
 
-        // Check transposition table
-        const uint64_t signature = state.getSignature();
-        if (const auto it = transpositionTable.find(signature); it != transpositionTable.end()) {
-            auto &[score, storedDepth, flag] = it->second;
-            if (storedDepth >= depth) {
-                switch (flag) {
-                    case EXACT: return score;
-                    case LOWER: alpha = std::max(alpha, score); break;
-                    case UPPER: beta = std::min(beta, score); break;
-                }
-                if (alpha >= beta) return score;
-            } else if (std::abs(score) >= (WIN - 20)) {
-                // If the score is a win or a loss, the depth is irrelevant. The -20 accounts for the ply value.
-                    return score;
-            }
-        }
-
         // Check if the game is over or if we reached the maximum depth
         if (depth == 0 || AtariGo::isTerminal(state)) return distanceAwareScore(state.getHeuristic(), ply);
 
@@ -67,8 +46,6 @@ private:
 
         const Player toMove = state.getPlayerToMove();
         int best = toMove == WHITE ? -INF : INF;
-        const int origAlpha = alpha;
-        const int origBeta = beta;
 
         // Iterate through successors
         for (auto &child: successors) {
@@ -84,12 +61,6 @@ private:
             }
             if (alpha >= beta) break;
         }
-
-        // Store the best score in the transposition table
-        Bound flag = EXACT;
-        if (best <= origAlpha) flag = UPPER;
-        else if (best >= origBeta) flag = LOWER;
-        transpositionTable[signature] = {best, depth, flag};
 
         return best;
     }
@@ -138,15 +109,13 @@ public:
         }
         if (successors.size() == 1) return successors[0];
 
-        transpositionTable.clear();
-        transpositionTable.reserve(10'000'000);
         int overallBestScore = 0;
         std::vector<int> overallBestIdx;
 
         const Player currentPlayer = state.getPlayerToMove();
 
         for (int depth = 1; depth <= depthLimit && !ctx.timedOut; ++depth) {
-            int bestScore = (currentPlayer == BLACK) ? INF : -INF; // For WHITE (Maximizer) this is alpha, for BLACK (Minimizer) this is beta
+            int bestScore = (currentPlayer == BLACK) ? INF : -INF;
             std::vector<int> bestIdx;
 
             // Process the first successor
@@ -199,7 +168,6 @@ public:
                         << ". Best score: " << overallBestScore
                         << ". Candidates: " << bestIdx.size()
                         << ". Nodes: " << ctx.nodeCount
-                        << ". TT Size: " << transpositionTable.size()
                         << ". Time: " << elapsedMs << " ms\n";
 
                 if (std::abs(overallBestScore) >= WIN) break;
@@ -208,7 +176,7 @@ public:
 
         if (overallBestIdx.empty()) {
             std::cerr << "Error: No best move identified after search. Returning first successor.\n";
-            // Fallback to first successor if search was interrupted early or no valid moves found by search logic
+            // Fallback to first successor if search was interrupted early
             if (!successors.empty()) {
                  return successors[0];
             }
@@ -217,6 +185,7 @@ public:
             return state;
         }
 
+        // If multiple moves have the same best score, pick one randomly
         std::uniform_int_distribution<int> dist(0, overallBestIdx.size() - 1);
         return successors[overallBestIdx[dist(rng)]];
     }
