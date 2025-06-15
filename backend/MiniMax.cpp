@@ -2,7 +2,6 @@
 #include <iostream>
 #include <random>
 #include <chrono>
-#include "unordered_dense.h"
 #include "AtariGo.h"
 
 
@@ -19,9 +18,6 @@ inline int distanceAwareScore(const int raw, const int ply) {
 
 class MiniMax {
 private:
-    // Transposition table: signature -> (score, depth, bound)
-    mutable ankerl::unordered_dense::map<uint64_t, std::tuple<int, int, Bound> > transpositionTable;
-
     struct SearchContext {
         const std::chrono::steady_clock::time_point start;
         const std::chrono::milliseconds timeLimit;
@@ -29,7 +25,7 @@ private:
         uint64_t nodeCount = 0;
     };
 
-    int minimax(const Board &state, int depth, int alpha, int beta, SearchContext &ctx, const int ply) const {
+    int minimax(const Board &state, int depth, SearchContext &ctx, const int ply) const {
         // Check if the search has timed out
         if (ctx.timedOut) return 0;
 
@@ -38,23 +34,6 @@ private:
             if (std::chrono::steady_clock::now() - ctx.start >= ctx.timeLimit) {
                 ctx.timedOut = true;
                 return 0;
-            }
-        }
-
-        // Check transposition table
-        const uint64_t signature = state.getSignature();
-        if (const auto it = transpositionTable.find(signature); it != transpositionTable.end()) {
-            auto &[score, storedDepth, flag] = it->second;
-            if (storedDepth >= depth) {
-                switch (flag) {
-                    case EXACT: return score;
-                    case LOWER: alpha = std::max(alpha, score); break;
-                    case UPPER: beta = std::min(beta, score); break;
-                }
-                if (alpha >= beta) return score;
-            } else if (std::abs(score) >= (WIN - 20)) {
-                // If the score is a win or a loss, the depth is irrelevant. The -20 accounts for the ply value.
-                    return score;
             }
         }
 
@@ -67,29 +46,18 @@ private:
 
         const Player toMove = state.getPlayerToMove();
         int best = toMove == WHITE ? -INF : INF;
-        const int origAlpha = alpha;
-        const int origBeta = beta;
 
         // Iterate through successors
         for (auto &child: successors) {
-            int score = minimax(child, depth - 1, alpha, beta, ctx, ply + 1);
+            int score = minimax(child, depth - 1, ctx, ply + 1);
             if (ctx.timedOut) return 0;
 
             if (toMove == WHITE) {
                 best = std::max(best, score);
-                alpha = std::max(alpha, best);
             } else {
                 best = std::min(best, score);
-                beta = std::min(beta, best);
             }
-            if (alpha >= beta) break;
         }
-
-        // Store the best score in the transposition table
-        Bound flag = EXACT;
-        if (best <= origAlpha) flag = UPPER;
-        else if (best >= origBeta) flag = LOWER;
-        transpositionTable[signature] = {best, depth, flag};
 
         return best;
     }
@@ -138,49 +106,39 @@ public:
         }
         if (successors.size() == 1) return successors[0];
 
-        transpositionTable.clear();
-        transpositionTable.reserve(10'000'000);
         int overallBestScore = 0;
         std::vector<int> overallBestIdx;
 
         const Player currentPlayer = state.getPlayerToMove();
 
         for (int depth = 1; depth <= depthLimit && !ctx.timedOut; ++depth) {
-            int bestScore = (currentPlayer == BLACK) ? INF : -INF; // For WHITE (Maximizer) this is alpha, for BLACK (Minimizer) this is beta
+            int bestScore = (currentPlayer == BLACK) ? INF : -INF;
             std::vector<int> bestIdx;
 
             // Process the first successor
             if (!successors.empty()) {
-                // For the first child, use a full alpha-beta window
-                bestScore = minimax(successors[0], depth - 1, -INF, INF, ctx, 0);
+                bestScore = minimax(successors[0], depth - 1, ctx, 0);
                 if (ctx.timedOut) break;
                 bestIdx = {0};
             }
 
             // Process remaining successors
             for (int i = 1; i < static_cast<int>(successors.size()) && !ctx.timedOut; ++i) {
-                int score;
-                if (currentPlayer == WHITE) {
-                    // Alpha is the bestScore found so far from previous siblings, Beta is INF
-                    score = minimax(successors[i], depth - 1, bestScore, INF, ctx, 0);
-                } else { // BLACK
-                    // Alpha is -INF, Beta is the bestScore found so far from previous siblings
-                    score = minimax(successors[i], depth - 1, -INF, bestScore, ctx, 0);
-                }
+                int score = minimax(successors[i], depth - 1, ctx, 0);
 
                 if (ctx.timedOut) break;
 
                 // Update best score and best move(s) for the current depth
                 if (currentPlayer == WHITE) {
                     if (score > bestScore) {
-                        bestScore = score; // Update alpha
+                        bestScore = score;
                         bestIdx = {i};
                     } else if (score == bestScore) {
                         bestIdx.push_back(i);
                     }
                 } else { // BLACK
                     if (score < bestScore) {
-                        bestScore = score; // Update beta
+                        bestScore = score;
                         bestIdx = {i};
                     } else if (score == bestScore) {
                         bestIdx.push_back(i);
@@ -199,7 +157,6 @@ public:
                         << ". Best score: " << overallBestScore
                         << ". Candidates: " << bestIdx.size()
                         << ". Nodes: " << ctx.nodeCount
-                        << ". TT Size: " << transpositionTable.size()
                         << ". Time: " << elapsedMs << " ms\n";
 
                 if (std::abs(overallBestScore) >= WIN) break;
@@ -208,7 +165,7 @@ public:
 
         if (overallBestIdx.empty()) {
             std::cerr << "Error: No best move identified after search. Returning first successor.\n";
-            // Fallback to first successor if search was interrupted early or no valid moves found by search logic
+            // Fallback to first successor if search was interrupted early
             if (!successors.empty()) {
                  return successors[0];
             }
@@ -217,6 +174,7 @@ public:
             return state;
         }
 
+        // If multiple moves have the same best score, pick one randomly
         std::uniform_int_distribution<int> dist(0, overallBestIdx.size() - 1);
         return successors[overallBestIdx[dist(rng)]];
     }
