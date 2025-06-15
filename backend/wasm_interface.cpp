@@ -60,7 +60,7 @@ BoardParseResult parseBoard(const char* boardStr) {
         if (c == 'b') result.board.setBlack(i);
         else if (c == 'w') result.board.setWhite(i);
     }
-    AtariGo::calculateHeuristic(result.board);
+    AtariGo::computeHeuristic(result.board);
 
     std::cout << "Parsed time limit: " << result.timeLimit << "ms\n";
     std::cout << "Parsed max depth: " << result.maxDepth << "\n";

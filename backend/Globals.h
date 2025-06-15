@@ -1,5 +1,6 @@
 #ifndef GAMECOMMON_H
 #define GAMECOMMON_H
+#include "Zobrist.h"
 
 enum Player { NO_PLAYER = 0, BLACK = 1, WHITE = 2 };
 enum Stone { Empty = 0, Black = 1, White = 2 };
@@ -24,5 +25,27 @@ using Bitboard128 = unsigned __int128;
 
 // A 128-bit bitboard with only its least-significant bit set (…0001)
 static constexpr Bitboard128 ONE_BIT = static_cast<Bitboard128>(1);
+
+// Creating the Zobrist hash table for AtariGo
+constexpr uint64_t xorshift64(uint64_t& state) {
+    state ^= state << 13;
+    state ^= state >> 7;
+    state ^= state << 17;
+    return state;
+}
+
+constexpr std::array<std::array<uint64_t, BOARD_SIZE>, 2> generateZobristTable() {
+    std::array<std::array<uint64_t, BOARD_SIZE>, 2> table{};
+    uint64_t state = 123456789ULL;
+
+    for (size_t color = 0; color < 2; ++color) {
+        for (size_t pos = 0; pos < BOARD_SIZE; ++pos) {
+            table[color][pos] = xorshift64(state);
+        }
+    }
+    return table;
+}
+
+inline constexpr auto ZOBRIST_TABLE = generateZobristTable();
 
 #endif

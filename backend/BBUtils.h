@@ -147,8 +147,8 @@ inline Bitboard128 floodFillGroupBits(const Bitboard128 bitboard, const Bitboard
     return group;
 }
 
-// array of mask for each move d4 d6 f4 f6 c3 c7 g3 g7 ( strong moves )
-inline constexpr std::array<Bitboard128, 8> STRONG_MOVE_MASK = []() {
+// array of mask for each move d4 d6 f4 f6 c3 c7 g3 g7 ( opening moves )
+inline constexpr std::array<Bitboard128, 8> OPENING_MOVE_MASK = []() {
     if constexpr (BOARD_EDGE == 9) {
         std::array<Bitboard128, 8> m{};
         const int LE[] = {30, 48, 32, 50, 20, 24, 56, 60};
@@ -174,7 +174,7 @@ inline constexpr std::array<Bitboard128, 8> STRONG_MOVE_MASK = []() {
         }
         return m;
     } else {
-        static_assert(BOARD_EDGE == 9 || BOARD_EDGE == 8 || BOARD_EDGE == 7, "Unsupported BOARD_EDGE size for STRONG_MOVE_MASK");
+        static_assert(BOARD_EDGE == 9 || BOARD_EDGE == 8 || BOARD_EDGE == 7, "Unsupported BOARD_EDGE size for OPENING_MOVE_MASK");
         return std::array<Bitboard128, 8>{};
     }
 }();
