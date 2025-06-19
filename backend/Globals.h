@@ -1,6 +1,5 @@
 #ifndef GAMECOMMON_H
 #define GAMECOMMON_H
-#include "Zobrist.h"
 
 enum Player { NO_PLAYER = 0, BLACK = 1, WHITE = 2 };
 enum Stone { Empty = 0, Black = 1, White = 2 };

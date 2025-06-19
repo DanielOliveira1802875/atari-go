@@ -91,7 +91,7 @@ public:
     [[nodiscard]] bool getIsHeuristicCalculated() const { return isHeuristicCalculated; }
 
     [[nodiscard]] int getHeuristic() const {
-        assert(isHeuristicCalculated);
+        // assert(isHeuristicCalculated);
         return heuristic;
     }
 

@@ -25,6 +25,7 @@ self.onmessage = async (event) => {
           wasmModule = {
             getBestMove: (self as any).Module.cwrap("getBestMove", "string", ["string"]),
             checkCapture: (self as any).Module.cwrap("checkCapture", "string", ["string"]),
+            wasMoveSuicidal: (self as any).Module.cwrap("wasMoveSuicidal", "string", ["string"]),
           };
           // Notify the main thread that we are ready
           self.postMessage({ type: "initialized" });
@@ -82,6 +83,19 @@ self.onmessage = async (event) => {
     try {
       const result = wasmModule.checkCapture(payload);
       self.postMessage({ type: "checkCaptureDone", payload: result });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      self.postMessage({ type: "error", payload: errorMessage });
+    }
+  } else if (type === "wasMoveSuicidal") {
+    if (!wasmModule) {
+      self.postMessage({ type: "error", payload: "WebAssembly module not initialized" });
+      return;
+    }
+
+    try {
+      const result = wasmModule.wasMoveSuicidal(payload);
+      self.postMessage({ type: "wasMoveSuicidalDone", payload: result });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       self.postMessage({ type: "error", payload: errorMessage });

@@ -244,3 +244,24 @@ void AtariGo::print(Board &board) {
     }
     std::cout << "\nHeuristic: " << board.getHeuristic() << std::endl;
 }
+
+bool AtariGo::wasMoveSuicidal(const Board &state) {
+
+    const int heuristic = state.getHeuristic();
+
+    // If it isn't a WIN or LOSS, then the move wasn't a suicide.
+    if (heuristic != WIN && heuristic != -WIN) return false;
+
+
+    // Determine who made the last move.
+    const Player nextPlayerToMove = state.getPlayerToMove();
+    const Player playerWhoMoved = (nextPlayerToMove == BLACK) ? WHITE : BLACK;
+
+    if (playerWhoMoved == WHITE) {
+        // If White moved and Black won, it was a suicide by White.
+        return heuristic == -WIN;
+    } else { // playerWhoMoved == BLACK
+        // If Black moved and White won, it was a suicide by Black.
+        return heuristic == WIN;
+    }
+}

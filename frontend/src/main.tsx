@@ -9,7 +9,7 @@ import Home from "@/components/board/Home.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <Toaster />
+    <Toaster position="top-center" richColors duration={1000} />
     <HashRouter>
       <Routes>
         <Route path={"/"} element={<AppContainer />}>

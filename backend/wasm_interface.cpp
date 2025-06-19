@@ -130,5 +130,18 @@ extern "C" {
         return ret;
     }
 
+    EMSCRIPTEN_KEEPALIVE
+    const char* wasMoveSuicidal(const char* boardStr) {
+        std::cout << "Checking if move was suicidal with board: " << boardStr << "\n";
+        BoardParseResult parsedResult = parseBoard(boardStr);
+        bool wasSuicidal = AtariGo::wasMoveSuicidal(parsedResult.board);
+        std::string resultStr = wasSuicidal ? "true" : "false";
+
+        const auto ret = new char[resultStr.size() + 1];
+        std::strcpy(ret, resultStr.c_str());
+        std::cout << "Was move suicidal: " << resultStr << "\n";
+        return ret;
+    }
+
 
 } // extern "C"

@@ -7,6 +7,7 @@ import { useNavigate } from "react-router";
 import StatusMessage from "@/components/board/StatusMessage.tsx";
 import AIThinkingProgress from "@/components/board/AIThinkingProgress.tsx";
 import { ArrowLeftToLine, ArrowRightToLine } from "lucide-react";
+import { toast } from "sonner";
 
 const findLastMoveIndex = (oldB: TCell[] | undefined, newB: TCell[]): number | null => {
   if (!oldB) return null; // For the very first board in history
@@ -27,10 +28,25 @@ const playStoneSound = () => {
 
 const getEmptyBoard = (size: number): TCell[] => {
   const b = Array(size).fill(".") as TCell[];
-     b[3 * 9 + 4] = "W";
-     b[3 * 9 + 5] = "B";
-     b[4 * 9 + 5] = "W";
-     b[4 * 9 + 4] = "B";
+  b[3 * 9 + 4] = "W";
+  b[3 * 9 + 5] = "B";
+  b[4 * 9 + 5] = "W";
+  b[4 * 9 + 4] = "B";
+
+/*
+  b[31] = "W";
+  b[32] = "B";
+  b[40] = "B";
+  b[49] = "B";
+  b[48] = "B";
+  b[47] = "B";
+  b[46] = "B";
+  b[41] = "W";
+  b[23] = "W";
+  b[24] = "W";
+  b[42] = "W";
+  b[34] = "W";
+ */
   return b;
 };
 
@@ -57,6 +73,9 @@ export default function Board() {
   const navigate = useNavigate();
 
   const workerRef = useRef<Worker | null>(null);
+
+  // Save th index of the temporary cell being clicked, until the worker checks if the move is suicidal
+  const tmpIdx = useRef<number>(0);
 
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [reviewBoardIndex, setReviewBoardIndex] = useState(0);
@@ -94,7 +113,14 @@ export default function Board() {
         fileName: `atari_go_${boardEdge}x${boardEdge}`,
       },
     });
-    worker.onmessage = ({ data }) => {
+    worker.postMessage({ type: "init" });
+    workerRef.current = worker;
+    return () => worker.terminate();
+  }, [boardEdge]);
+
+  useEffect(() => {
+    if (!workerRef.current) return;
+    workerRef.current.onmessage = ({ data }) => {
       const { type, payload } = data;
       if (type === "error") {
         if (import.meta.env.DEV) console.error("Worker error:", payload);
@@ -119,7 +145,6 @@ export default function Board() {
         if (payload === "") {
           setAiThinking(false);
           if (!gameOver) {
-            // Only toggle player if game is not over
             togglePlayer();
           }
           return;
@@ -134,11 +159,23 @@ export default function Board() {
         if (winner === playerColor) addWin();
         else addLoss();
       }
+      if (type === "wasMoveSuicidalDone") {
+        const isSuicidal = payload === "true";
+        if (isSuicidal) {
+          toast.error("Jogada suicida! Escolha outra casa.");
+          setAiThinking(false);
+          return;
+        }
+
+        const newPlayerBoard = [...board];
+        newPlayerBoard[tmpIdx.current] = playerColor;
+        setLastMoveIndex(tmpIdx.current);
+        setBoard(newPlayerBoard);
+        setBoardHistory((prevHistory) => [...prevHistory, newPlayerBoard]);
+        checkWinner(newPlayerBoard);
+      }
     };
-    worker.postMessage({ type: "init" });
-    workerRef.current = worker;
-    return () => worker.terminate();
-  }, [checkWinner, togglePlayer]);
+  }, [checkWinner, togglePlayer, board, playerColor, gameOver, addWin, addLoss]);
 
   useEffect(() => {
     if (isReviewMode) return;
@@ -158,14 +195,10 @@ export default function Board() {
   const handleCellClick = (idx: number) => {
     if (isReviewMode || !playerColor || gameOver || wasmLoading || aiThinking || board[idx] !== "." || currentPlayer !== playerColor) return;
 
-    const newPlayerBoard = [...board];
-    newPlayerBoard[idx] = playerColor;
-
-    setLastMoveIndex(idx);
-    setBoard(newPlayerBoard);
-    setBoardHistory((prevHistory) => [...prevHistory, newPlayerBoard]);
-
-    checkWinner(newPlayerBoard);
+    tmpIdx.current = idx; // Save the index of the clicked cell for when the response comes back from the worker
+    const newBoard = [...board];
+    newBoard[idx] = playerColor;
+    workerRef.current?.postMessage({ type: "wasMoveSuicidal", payload: `${newBoard.join("")}` });
   };
 
   const startReview = () => {

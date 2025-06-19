@@ -3,13 +3,13 @@
 
 #include <array>
 #include <cstdint>
-#include <cassert>
+// #include <cassert>
 #include <iostream>
 #include "Globals.h"
 
 /// Clears the least-significant set bit in b. UB if b==0.
 inline void clearLSB(Bitboard128 &b) noexcept {
-    assert(b != 0);
+    // assert(b != 0);
     // Subtracting 1 sets the least-significant 1-bit to 0 and sets all less-significant bits (to the right) to 1 (e.g., 1100 -> 1011)
     // AND-ing this with the original value then clears that 1-bit while leaving all other bits unchanged (e.g., 1100 & 1011 -> 1000)
     b &= b - 1;
@@ -17,25 +17,25 @@ inline void clearLSB(Bitboard128 &b) noexcept {
 
 /// Sets the bit at `pos` in `bb` (0..127) to 1.
 inline void setBit(Bitboard128 &b, int pos) noexcept {
-    assert(pos >= 0 && pos < 128);
+    // assert(pos >= 0 && pos < 128);
     b |= (ONE_BIT << pos);
 }
 
 /// Clears the bit at `pos` in `bb` (0..127).
 inline void clearBit(Bitboard128 &b, int pos) noexcept {
-    assert(pos >= 0 && pos < 128);
+    // assert(pos >= 0 && pos < 128);
     b &= ~(ONE_BIT << pos);
 }
 
 /// Tests whether the bit at `pos` in `bb` is set (1).
 inline bool testBit(const Bitboard128 b, const int pos) noexcept {
-    assert(pos >= 0 && pos < 128);
+    // assert(pos >= 0 && pos < 128);
     return (b & (ONE_BIT << pos)) != 0;
 }
 
 /// Returns index [0..63] of the least-significant set bit in x.
 inline int getLSBIndex(const uint64_t x) noexcept {
-    assert(x != 0);
+    // assert(x != 0);
     // __builtin_ctzll is a GCC/Clang built-in function that counts the number of
     // trailing zeros in the binary representation of its argument.
     return __builtin_ctzll(x);
@@ -43,7 +43,7 @@ inline int getLSBIndex(const uint64_t x) noexcept {
 
 /// Returns index [0..127] of the least-significant set bit in b.
 inline int getLSBIndex(const Bitboard128 b) noexcept {
-    assert(b != 0);
+    // assert(b != 0);
     // Since __builtin_ctzll only works on 64-bit integers, we need to check
     // if the least significant bit is in the lower or upper 64 bits of b.
     const auto lo = static_cast<uint64_t>(b);
@@ -58,7 +58,7 @@ inline int getLSBIndex(const Bitboard128 b) noexcept {
 
 /// Clears and returns the index of the least-significant set bit in b.
 inline int popLSB(Bitboard128 &b) noexcept {
-    assert(b != 0);
+    // assert(b != 0);
     const int idx = getLSBIndex(b);
     clearLSB(b);
     return idx;

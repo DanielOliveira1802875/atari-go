@@ -15,7 +15,7 @@ call em++ -std=c++17 -O3 -flto -ffast-math -msimd128 -funroll-loops -ftree-vecto
   -o "..\Frontend\public\wasm\atari_go_9x9.js" ^
   -s WASM=1 ^
   -s DISABLE_EXCEPTION_CATCHING=1 ^
-  -s EXPORTED_FUNCTIONS="['_getBestMove', _checkCapture]" ^
+  -s EXPORTED_FUNCTIONS="['_getBestMove', _checkCapture, _wasMoveSuicidal]" ^
   -s EXPORTED_RUNTIME_METHODS="['ccall', 'cwrap', 'lengthBytesUTF8']" ^
   -s ALLOW_MEMORY_GROWTH=1 ^
   -s ENVIRONMENT="web,worker" ^
@@ -42,7 +42,7 @@ call em++ -std=c++17 -O3 -flto -ffast-math -msimd128 -funroll-loops -ftree-vecto
   -o "..\Frontend\public\wasm\atari_go_8x8.js" ^
   -s WASM=1 ^
   -s DISABLE_EXCEPTION_CATCHING=1 ^
-  -s EXPORTED_FUNCTIONS="['_getBestMove', _checkCapture]" ^
+  -s EXPORTED_FUNCTIONS="['_getBestMove', _checkCapture, _wasMoveSuicidal]" ^
   -s EXPORTED_RUNTIME_METHODS="['ccall', 'cwrap', 'lengthBytesUTF8']" ^
   -s ALLOW_MEMORY_GROWTH=1 ^
   -s ENVIRONMENT="web,worker" ^
@@ -69,7 +69,7 @@ call em++ -std=c++17 -O3 -flto -ffast-math -msimd128 -funroll-loops -ftree-vecto
   -o "..\Frontend\public\wasm\atari_go_7x7.js" ^
   -s WASM=1 ^
   -s DISABLE_EXCEPTION_CATCHING=1 ^
-  -s EXPORTED_FUNCTIONS="['_getBestMove', _checkCapture]" ^
+  -s EXPORTED_FUNCTIONS="['_getBestMove', _checkCapture, _wasMoveSuicidal]" ^
   -s EXPORTED_RUNTIME_METHODS="['ccall', 'cwrap', 'lengthBytesUTF8']" ^
   -s ALLOW_MEMORY_GROWTH=1 ^
   -s ENVIRONMENT="web,worker" ^
