@@ -1,0 +1,31 @@
+------------------------------ CPP -------------------------------
+Completed depth 1. Best score: 1000020. Candidates: 2. Nodes: 0. TT Size: 0. Time: 0 ms
+Completed depth 2. Best score: -2020. Candidates: 2. Nodes: 10. TT Size: 10. Time: 1 ms
+Completed depth 3. Best score: 60. Candidates: 2. Nodes: 52. TT Size: 42. Time: 2 ms
+Completed depth 4. Best score: -2060. Candidates: 1. Nodes: 253. TT Size: 188. Time: 4 ms
+Completed depth 5. Best score: 60. Candidates: 1. Nodes: 812. TT Size: 513. Time: 5 ms
+Completed depth 6. Best score: -2100. Candidates: 1. Nodes: 2749. TT Size: 1732. Time: 9 ms
+Completed depth 7. Best score: 40. Candidates: 2. Nodes: 7741. TT Size: 4816. Time: 16 ms
+Completed depth 8. Best score: -2040. Candidates: 1. Nodes: 22863. TT Size: 14303. Time: 35 ms
+Completed depth 9. Best score: 40. Candidates: 1. Nodes: 67689. TT Size: 43356. Time: 94 ms
+Completed depth 10. Best score: -2040. Candidates: 1. Nodes: 169828. TT Size: 108667. Time: 245 ms
+Completed depth 11. Best score: 40. Candidates: 1. Nodes: 510138. TT Size: 337787. Time: 794 ms
+Completed depth 12. Best score: -2040. Candidates: 1. Nodes: 1508158. TT Size: 1013840. Time: 2430 ms
+Completed depth 13. Best score: 20. Candidates: 2. Nodes: 4866591. TT Size: 3268058. Time: 8173 ms
+Completed depth 14. Best score: -2040. Candidates: 1. Nodes: 13607222. TT Size: 8972649. Time: 24331 ms
+
+------------------------------ WASM -------------------------------
+WASM stdout: Completed depth 1. Best score: 1000020. Candidates: 2. Nodes: 0. TT Size: 0. Time: 1 ms
+WASM stdout: Completed depth 2. Best score: -2020. Candidates: 2. Nodes: 10. TT Size: 10. Time: 2 ms
+WASM stdout: Completed depth 3. Best score: 60. Candidates: 2. Nodes: 52. TT Size: 42. Time: 3 ms
+WASM stdout: Completed depth 4. Best score: -2060. Candidates: 1. Nodes: 251. TT Size: 186. Time: 4 ms
+WASM stdout: Completed depth 5. Best score: 60. Candidates: 1. Nodes: 808. TT Size: 511. Time: 11 ms
+WASM stdout: Completed depth 6. Best score: -2100. Candidates: 1. Nodes: 2741. TT Size: 1728. Time: 28 ms
+WASM stdout: Completed depth 7. Best score: 40. Candidates: 2. Nodes: 7729. TT Size: 4812. Time: 73 ms
+WASM stdout: Completed depth 8. Best score: -2040. Candidates: 1. Nodes: 22844. TT Size: 14296. Time: 219 ms
+WASM stdout: Completed depth 9. Best score: 40. Candidates: 1. Nodes: 67592. TT Size: 43270. Time: 687 ms
+WASM stdout: Completed depth 10. Best score: -2040. Candidates: 1. Nodes: 169711. TT Size: 108440. Time: 1806 ms
+WASM stdout: Completed depth 11. Best score: 40. Candidates: 1. Nodes: 510171. TT Size: 336300. Time: 5848 ms
+WASM stdout: Completed depth 12. Best score: -2040. Candidates: 1. Nodes: 1507507. TT Size: 1006702. Time: 17689 ms
+WASM stdout: Completed depth 13. Best score: 20. Candidates: 2. Nodes: 4852408. TT Size: 3223101. Time: 58457 ms
+WASM stdout: Completed depth 14. Best score: -2040. Candidates: 1. Nodes: 13596953. TT Size: 8871038. Time: 168330
