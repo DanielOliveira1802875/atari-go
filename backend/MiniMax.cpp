@@ -1,6 +1,5 @@
 #include <vector>
 #include <iostream>
-#include <random>
 #include <chrono>
 #include "unordered_dense.h"
 #include "AtariGo.h"
@@ -30,8 +29,9 @@ private:
     };
 
     int minimax(const Board &state, int depth, int alpha, int beta, SearchContext &ctx, const int ply) const {
-        // Check if the search has timed out
-        if (ctx.timedOut) return 0;
+
+        // Check if the game is over or if we reached the maximum depth
+        if (depth == 0 || AtariGo::isTerminal(state)) return distanceAwareScore(state.getHeuristic(), ply);
 
         // Increment node count and occasionally check time
         if (++ctx.nodeCount % CHECK_INTERVAL == 0) {
@@ -45,6 +45,10 @@ private:
         const uint64_t signature = state.getSignature();
         if (const auto it = transpositionTable.find(signature); it != transpositionTable.end()) {
             auto &[score, storedDepth, flag] = it->second;
+            if (std::abs(score) >= (WIN - 20)) {
+                // If the score is a win or a loss, the depth is irrelevant. The -20 accounts for the ply value.
+                return score;
+            }
             if (storedDepth >= depth) {
                 switch (flag) {
                     case EXACT: return score;
@@ -52,14 +56,8 @@ private:
                     case UPPER: beta = std::min(beta, score); break;
                 }
                 if (alpha >= beta) return score;
-            } else if (std::abs(score) >= (WIN - 20)) {
-                // If the score is a win or a loss, the depth is irrelevant. The -20 accounts for the ply value.
-                    return score;
             }
         }
-
-        // Check if the game is over or if we reached the maximum depth
-        if (depth == 0 || AtariGo::isTerminal(state)) return distanceAwareScore(state.getHeuristic(), ply);
 
         // Generate successors
         const auto successors = AtariGo::generateSuccessors(state);
@@ -96,8 +94,22 @@ private:
 
 public:
     Board getBestMove(const Board &state, const std::chrono::milliseconds timeLimit, const int depthLimit) const {
-        static std::mt19937_64 rng{std::random_device{}()};
         SearchContext ctx{std::chrono::steady_clock::now(), timeLimit};
+
+        // This will make the lower depths more accessible.
+        if (depthLimit <= 2) {
+            std::cout << "Warning: Removing 80% of successors.\n";
+            AtariGo::removeRandomSuccessorsPercentage = 80;
+        }
+        else if (depthLimit <= 3) {
+            std::cout << "Warning: Removing 50% of successors.\n";
+            AtariGo::removeRandomSuccessorsPercentage = 50;
+        }
+        else if (depthLimit <= 4) {
+            std::cout << "Warning: Removing 20% of successors.\n";
+            AtariGo::removeRandomSuccessorsPercentage = 20;
+        }
+        else AtariGo::removeRandomSuccessorsPercentage = 0;
 
         std::vector<Board> successors = AtariGo::generateSuccessors(state);
 
@@ -120,7 +132,7 @@ public:
         // add a random opening move to the successors
         if (!openingMoves.empty()) {
             std::uniform_int_distribution<int> dist(0, openingMoves.size() - 1);
-            successors.push_back(openingMoves[dist(rng)]);
+            successors.push_back(openingMoves[dist(getRandom())]);
         }
 
         // always add the center
@@ -149,37 +161,29 @@ public:
             int bestScore = (currentPlayer == BLACK) ? INF : -INF; // For WHITE (Maximizer) this is alpha, for BLACK (Minimizer) this is beta
             std::vector<int> bestIdx;
 
-            // Process the first successor
-            if (!successors.empty()) {
-                // For the first child, use a full alpha-beta window
-                bestScore = minimax(successors[0], depth - 1, -INF, INF, ctx, 0);
-                if (ctx.timedOut) break;
-                bestIdx = {0};
-            }
-
             // Process remaining successors
-            for (int i = 1; i < static_cast<int>(successors.size()) && !ctx.timedOut; ++i) {
+            for (int i = 0; i < static_cast<int>(successors.size()) && !ctx.timedOut; ++i) {
                 int score;
                 if (currentPlayer == WHITE) {
                     // Alpha is the bestScore found so far from previous siblings, Beta is INF
-                    score = minimax(successors[i], depth - 1, bestScore, INF, ctx, 0);
+                    score = minimax(successors[i], depth - 1, bestScore - 1, INF, ctx, 0);
                 } else { // BLACK
                     // Alpha is -INF, Beta is the bestScore found so far from previous siblings
-                    score = minimax(successors[i], depth - 1, -INF, bestScore, ctx, 0);
+                    score = minimax(successors[i], depth - 1, -INF, bestScore + 1, ctx, 0);
                 }
 
                 if (ctx.timedOut) break;
 
                 // Update best score and best move(s) for the current depth
                 if (currentPlayer == WHITE) {
-                    if (score > bestScore) {
+                    if (score > bestScore || bestIdx.empty()) {
                         bestScore = score; // Update alpha
                         bestIdx = {i};
                     } else if (score == bestScore) {
                         bestIdx.push_back(i);
                     }
                 } else { // BLACK
-                    if (score < bestScore) {
+                    if (score < bestScore || bestIdx.empty()) {
                         bestScore = score; // Update beta
                         bestIdx = {i};
                     } else if (score == bestScore) {
@@ -209,15 +213,14 @@ public:
         if (overallBestIdx.empty()) {
             std::cerr << "Error: No best move identified after search. Returning first successor.\n";
             // Fallback to first successor if search was interrupted early or no valid moves found by search logic
-            if (!successors.empty()) {
-            return successors[0];
-        }
+            if (!successors.empty()) return successors[0];
+
             // If successors is also empty (should be caught earlier, but as a safeguard)
             std::cerr << "Critical Error: No successors and overallBestIdx is empty. Returning original state.\n";
             return state;
         }
 
         std::uniform_int_distribution<int> dist(0, overallBestIdx.size() - 1);
-        return successors[overallBestIdx[dist(rng)]];
+        return successors[overallBestIdx[dist(getRandom())]];
     }
 };

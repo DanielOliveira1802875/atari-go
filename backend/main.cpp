@@ -11,7 +11,7 @@
 
 Player playAIGame(const Settings &settingsPlayer1, const std::string &player1Name,
                   const Settings &settingsPlayer2, const std::string &player2Name,
-                  bool player1PlaysBlack, int thinkingTimeMs, int maxDepth) {
+                  bool player1PlaysBlack) {
     std::cout << "\n--- New Game ---" << std::endl;
     if (player1PlaysBlack) {
         std::cout << player1Name << " (Black) vs " << player2Name << " (White)" << std::endl;
@@ -44,7 +44,7 @@ Player playAIGame(const Settings &settingsPlayer1, const std::string &player1Nam
         AtariGo::print(board);
 
         auto t0 = std::chrono::high_resolution_clock::now();
-        const Board bestMoveBoard = minimax.getBestMove(board, std::chrono::milliseconds(thinkingTimeMs), maxDepth);
+        const Board bestMoveBoard = minimax.getBestMove(board, std::chrono::milliseconds(settings.TIME_LIMIT_MS), settings.SEARCH_DEPTH);
         auto t1 = std::chrono::high_resolution_clock::now();
         const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
 
@@ -69,33 +69,37 @@ Player playAIGame(const Settings &settingsPlayer1, const std::string &player1Nam
 
 int main() {
 Settings settings_v1;
-settings_v1.ATARI_THREAT_MULTIPLIER = 1'000'000;    // Multiplier for atari threats (default: 1'000'000, 0 disables)
-settings_v1.MIN_LIB_MULTIPLIER = 2'000;             // Multiplier for the group with the fewest liberties (default: 2'000; 0 disables)
-settings_v1.UNIQUE_LIB_MULTIPLIER = 20;             // Multiplier for unique liberties (default: 20, 0 disables)
-settings_v1.STARTING_MIN_LIBERTIES = 6;             // Starting minimum liberties for each group.
+// settings_v1.ATARI_THREAT_MULTIPLIER = 1'000'000;    // Multiplier for atari threats (default: 1'000'000, 0 disables)
+// settings_v1.MIN_LIB_MULTIPLIER = 2'000;             // Multiplier for the group with the fewest liberties (default: 2'000; 0 disables)
+// settings_v1.UNIQUE_LIB_MULTIPLIER = 20;             // Multiplier for unique liberties (default: 20, 0 disables)
+// settings_v1.STARTING_MIN_LIBERTIES = 6;             // Starting minimum liberties for each group.
+settings_v1.SEARCH_DEPTH = 20;                          // search depth for the AI
+settings_v1.TIME_LIMIT_MS = 5000;                       // time limit in milliseconds
+
 
 Settings settings_v2;
-settings_v2.ATARI_THREAT_MULTIPLIER = 1'000'000;    // Multiplier for atari threats (default: 1'000'000, 0 disables)
-settings_v2.MIN_LIB_MULTIPLIER = 2'000;             // Multiplier for the group with the fewest liberties (default: 2'000; 0 disables)
-settings_v2.UNIQUE_LIB_MULTIPLIER = 20;             // Multiplier for unique liberties (default: 20, 0 disables)
-settings_v2.STARTING_MIN_LIBERTIES = BOARD_SIZE;    // Starting minimum liberties for each group.
+// settings_v2.ATARI_THREAT_MULTIPLIER = 1'000'000;    // Multiplier for atari threats (default: 1'000'000, 0 disables)
+// settings_v2.MIN_LIB_MULTIPLIER = 2'000;             // Multiplier for the group with the fewest liberties (default: 2'000; 0 disables)
+// settings_v2.UNIQUE_LIB_MULTIPLIER = 20;             // Multiplier for unique liberties (default: 20, 0 disables)
+// settings_v2.STARTING_MIN_LIBERTIES = 6;             // Starting minimum liberties for each group.
+settings_v2.SEARCH_DEPTH = 20;                          // search depth for the AI
+settings_v2.TIME_LIMIT_MS = 1000;                       // time limit in milliseconds
+
 
     int player1_wins = 0;
     int player2_wins = 0;
     int draws = 0;
     const int NUM_GAMES = 40;
-    const int THINK_TIME_MS = 6000;
-    const int MAX_DEPTH_SEARCH = 1;
 
     for (int i = 0; i < NUM_GAMES; ++i) {
         Player winner;
         if (i % 2 == 0) {
-            winner = playAIGame(settings_v1, "AI_v1", settings_v2, "AI_v2", true, THINK_TIME_MS, MAX_DEPTH_SEARCH);
+            winner = playAIGame(settings_v1, "AI_v1", settings_v2, "AI_v2", true);
             if (winner == BLACK) player1_wins++;
             else if (winner == WHITE) player2_wins++;
             else draws++;
         } else {
-            winner = playAIGame(settings_v1, "AI_v1", settings_v2, "AI_v2", false, THINK_TIME_MS, MAX_DEPTH_SEARCH);
+            winner = playAIGame(settings_v1, "AI_v1", settings_v2, "AI_v2", false);
             if (winner == WHITE) player1_wins++;
             else if (winner == BLACK) player2_wins++;
             else draws++;

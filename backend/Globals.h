@@ -1,5 +1,6 @@
 #ifndef GAMECOMMON_H
 #define GAMECOMMON_H
+#include <random>
 
 enum Player { NO_PLAYER = 0, BLACK = 1, WHITE = 2 };
 enum Stone { Empty = 0, Black = 1, White = 2 };
@@ -20,6 +21,8 @@ struct Settings {
     int MIN_LIB_MULTIPLIER = 2'000;
     int UNIQUE_LIB_MULTIPLIER = 20;
     int STARTING_MIN_LIBERTIES = 6;
+    int SEARCH_DEPTH = 64;
+    int TIME_LIMIT_MS = 6000; // Default time limit in milliseconds
 
     Settings() = default;
 };
@@ -53,5 +56,10 @@ constexpr std::array<std::array<uint64_t, BOARD_SIZE>, 2> generateZobristTable()
 }
 
 inline constexpr auto ZOBRIST_TABLE = generateZobristTable();
+
+inline std::mt19937& getRandom() {
+    static std::mt19937 engine(std::random_device{}());
+    return engine;
+}
 
 #endif
