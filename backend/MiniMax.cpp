@@ -1,6 +1,5 @@
 #include <vector>
 #include <iostream>
-#include <random>
 #include <chrono>
 #include "unordered_dense.h"
 #include "AtariGo.h"
@@ -95,8 +94,25 @@ private:
 
 public:
     Board getBestMove(const Board &state, const std::chrono::milliseconds timeLimit, const int depthLimit) const {
-        static std::mt19937_64 rng{std::random_device{}()};
         SearchContext ctx{std::chrono::steady_clock::now(), timeLimit};
+
+        // This will make the lower depths more accessible.
+        if (depthLimit <= 2) {
+            std::cout << "Warning: Removing 80% of successors.\n";
+            AtariGo::removeRandomSuccessorsPercentage = 80;
+        }
+        else if (depthLimit <= 3) {
+            std::cout << "Warning: Removing 50% of successors.\n";
+            AtariGo::removeRandomSuccessorsPercentage = 50;
+        }
+        else if (depthLimit <= 4) {
+            std::cout << "Warning: Removing 20% of successors.\n";
+            AtariGo::removeRandomSuccessorsPercentage = 20;
+        }
+        else {
+            std::cout << "Removing no successors.\n";
+            AtariGo::removeRandomSuccessorsPercentage = 0;
+        }
 
         std::vector<Board> successors = AtariGo::generateSuccessors(state);
 
@@ -119,7 +135,7 @@ public:
         // add a random opening move to the successors
         if (!openingMoves.empty()) {
             std::uniform_int_distribution<int> dist(0, openingMoves.size() - 1);
-            successors.push_back(openingMoves[dist(rng)]);
+            successors.push_back(openingMoves[dist(getRandom())]);
         }
 
         // always add the center
@@ -208,6 +224,6 @@ public:
         }
 
         std::uniform_int_distribution<int> dist(0, overallBestIdx.size() - 1);
-        return successors[overallBestIdx[dist(rng)]];
+        return successors[overallBestIdx[dist(getRandom())]];
     }
 };

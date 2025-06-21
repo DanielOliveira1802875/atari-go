@@ -7,6 +7,8 @@
 
 #include "BBUtils.h"
 
+int AtariGo::removeRandomSuccessorsPercentage = 0;
+
 std::vector<Board> AtariGo::generateSuccessors(const Board &state) {
     static std::vector<std::pair<int, Board> > scored_successors(BOARD_SIZE);
     scored_successors.clear();
@@ -23,6 +25,21 @@ std::vector<Board> AtariGo::generateSuccessors(const Board &state) {
         successor.setStone(pos);
         computeHeuristic(successor);
         score = successor.getHeuristic();
+    }
+
+    if (removeRandomSuccessorsPercentage > 0 && !scored_successors.empty()) {
+        // Remove a percentage of successors randomly
+        const size_t initialSize = scored_successors.size();
+        size_t toRemove = static_cast<size_t>(initialSize * (removeRandomSuccessorsPercentage / 100.0));
+
+        // Ensure at least one successor remains
+        if (toRemove >= initialSize) toRemove = initialSize - 1;
+
+        if (toRemove > 0) {
+            // Shuffle the successors and then remove the specified number
+            std::shuffle(scored_successors.begin(), scored_successors.end(), getRandom());
+            scored_successors.resize(initialSize - toRemove);
+        }
     }
 
     if (state.getPlayerToMove() == BLACK) {

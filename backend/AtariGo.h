@@ -29,6 +29,10 @@ public:
     [[nodiscard]] static bool wasMoveSuicidal(const Board &state);
 
     static void print(Board &board);
+
+    // If the value is greater than 0, it removes that percentage of successors.
+    // NOTE: This should be used to put the AI at a DISADVANTAGE, not an advantage.
+    static int removeRandomSuccessorsPercentage;
 };
 
 #endif

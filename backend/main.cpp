@@ -1,7 +1,6 @@
 #include <iostream>
 #include <sstream>
 #include <chrono>
-#include <random>
 
 #include "Board.h"
 #include "AtariGo.h"
@@ -11,7 +10,6 @@
 class Game {
 public:
     static void run() {
-        std::mt19937_64 rng;
         Board board;
         AtariGo atariGo;
 
