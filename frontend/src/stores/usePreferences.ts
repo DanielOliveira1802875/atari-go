@@ -30,12 +30,12 @@ type Store = {
 };
 
 export const levelConfigs: Record<number, LevelConfig> = {
-  1: { depth: 1, time: 200 },
+  1: { depth: 2, time: 200 },
   2: { depth: 3, time: 500 },
-  3: { depth: 5, time: 800 },
-  4: { depth: 64, time: 1000 },
-  5: { depth: 64, time: 3000 },
-  6: { depth: 64, time: 6000 },
+  3: { depth: 4, time: 800 },
+  4: { depth: 5, time: 1000 },
+  5: { depth: 20, time: 1000 },
+  6: { depth: 20, time: 5000 },
 };
 
 export const usePreferences = create<Store>()((set) => ({

@@ -28,12 +28,12 @@ const playStoneSound = () => {
 
 const getEmptyBoard = (size: number): TCell[] => {
   const b = Array(size).fill(".") as TCell[];
-  b[3 * 9 + 4] = "W";
+  /*  b[3 * 9 + 4] = "W";
   b[3 * 9 + 5] = "B";
   b[4 * 9 + 5] = "W";
-  b[4 * 9 + 4] = "B";
+  b[4 * 9 + 4] = "B";*/
 
-/*
+  /*
   b[31] = "W";
   b[32] = "B";
   b[40] = "B";

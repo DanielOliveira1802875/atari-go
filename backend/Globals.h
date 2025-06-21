@@ -1,5 +1,6 @@
 #ifndef GAMECOMMON_H
 #define GAMECOMMON_H
+#include <random>
 
 enum Player { NO_PLAYER = 0, BLACK = 1, WHITE = 2 };
 enum Stone { Empty = 0, Black = 1, White = 2 };
@@ -46,5 +47,10 @@ constexpr std::array<std::array<uint64_t, BOARD_SIZE>, 2> generateZobristTable()
 }
 
 inline constexpr auto ZOBRIST_TABLE = generateZobristTable();
+
+inline std::mt19937& getRandom() {
+    static std::mt19937 engine(std::random_device{}());
+    return engine;
+}
 
 #endif
