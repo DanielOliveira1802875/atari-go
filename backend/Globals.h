@@ -18,7 +18,6 @@ constexpr int WIN = 100'000'000;
 constexpr int  ATARI_THREAT_SCORE = 1'000'000;
 constexpr int  MIN_LIB_MULTIPLIER = 2'000;
 constexpr int  UNIQUE_LIB_MULTIPLIER = 20;
-constexpr int  STARTING_MIN_LIBERTIES = BOARD_SIZE;
 
 // 128-bit unsigned integer type
 using Bitboard128 = unsigned __int128;

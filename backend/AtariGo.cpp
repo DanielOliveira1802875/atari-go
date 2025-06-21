@@ -8,6 +8,7 @@
 #include "BBUtils.h"
 
 int AtariGo::removeRandomSuccessorsPercentage = 0;
+std::chrono::high_resolution_clock::duration AtariGo::total_heuristic_computation_time{0};
 
 std::vector<Board> AtariGo::generateSuccessors(const Board &state) {
     static std::vector<std::pair<int, Board> > scored_successors(BOARD_SIZE);
@@ -126,6 +127,8 @@ void AtariGo::computeHeuristic(Board &state) {
     if (state.getIsHeuristicCalculated())
         return;
 
+    auto start_time_heuristic = std::chrono::high_resolution_clock::now();
+
     int minB1, minW1;
     int countMinB1Groups, countMinW1Groups;
     int uniqueTotalBlackLib, uniqueTotalWhiteLib;
@@ -196,6 +199,7 @@ void AtariGo::computeHeuristic(Board &state) {
     score += (uniqueTotalWhiteLib - uniqueTotalBlackLib) * UNIQUE_LIB_MULTIPLIER;
 
     state.setHeuristic(score);
+    total_heuristic_computation_time += (std::chrono::high_resolution_clock::now() - start_time_heuristic);
 }
 
 Bitboard128 AtariGo::getCapturedGroups(Board &state) {

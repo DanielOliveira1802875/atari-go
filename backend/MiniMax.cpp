@@ -223,6 +223,12 @@ public:
             return state;
         }
 
+        static int TotalTimeTaken = 0;
+        TotalTimeTaken += std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - ctx.start).count();
+        long long total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(AtariGo::total_heuristic_computation_time).count();
+        std::cout << "Total time spent in computeHeuristic: " << total_ms << " ms" << std::endl;
+        std::cout << "Total time taken: " << TotalTimeTaken << " ms\n";
+
         std::uniform_int_distribution<int> dist(0, overallBestIdx.size() - 1);
         return successors[overallBestIdx[dist(getRandom())]];
     }

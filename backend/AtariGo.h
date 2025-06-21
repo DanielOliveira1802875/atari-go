@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "Board.h"
+#include <chrono>
 
 class AtariGo
 {
@@ -33,6 +34,10 @@ public:
     // If the value is greater than 0, it removes that percentage of successors.
     // NOTE: This should be used to put the AI at a DISADVANTAGE, not an advantage.
     static int removeRandomSuccessorsPercentage;
+
+    static std::chrono::high_resolution_clock::duration total_heuristic_computation_time; // Adicionar esta linha
+    // Opcional: para resetar o contador, se necessário entre diferentes fases de teste
+    static void resetHeuristicTimeCounter() { total_heuristic_computation_time = std::chrono::high_resolution_clock::duration::zero(); }
 };
 
 #endif

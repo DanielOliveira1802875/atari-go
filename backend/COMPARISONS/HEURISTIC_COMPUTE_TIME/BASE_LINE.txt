@@ -1,0 +1,143 @@
+--------------------------  BASELINE RUNS --------------------------
+This serves as a baseline without any overhead regarding variable management.
+
+------------------------------ RUN 1 -------------------------------
+
+Enter your move (row col) or (letter number):c6
+ You placed a stone at (2, 5)
+  1 2 3 4 5 6 7 8 9
+A . . . . . . . . .
+B . . . . . . . . .
+C . . . . . B . . .
+D . . . . W B . . .
+E . . . . B W . . .
+F . . . . . . . . .
+G . . . . . . . . .
+H . . . . . . . . .
+I . . . . . . . . .
+
+Heuristic: -40
+Player WHITE (AI) is thinking...
+
+Completed depth 1. Best score: 1000020. Candidates: 2. Nodes: 0. TT Size: 0. Time: 0 ms
+Completed depth 2. Best score: -2020. Candidates: 2. Nodes: 10. TT Size: 10. Time: 1 ms
+Completed depth 3. Best score: 60. Candidates: 2. Nodes: 52. TT Size: 42. Time: 2 ms
+Completed depth 4. Best score: -2060. Candidates: 1. Nodes: 253. TT Size: 188. Time: 4 ms
+Completed depth 5. Best score: 60. Candidates: 1. Nodes: 812. TT Size: 513. Time: 5 ms
+Completed depth 6. Best score: -2100. Candidates: 1. Nodes: 2749. TT Size: 1732. Time: 9 ms
+Completed depth 7. Best score: 40. Candidates: 2. Nodes: 7741. TT Size: 4816. Time: 16 ms
+Completed depth 8. Best score: -2040. Candidates: 1. Nodes: 22863. TT Size: 14303. Time: 35 ms
+Completed depth 9. Best score: 40. Candidates: 1. Nodes: 67689. TT Size: 43356. Time: 94 ms
+Completed depth 10. Best score: -2040. Candidates: 1. Nodes: 169828. TT Size: 108667. Time: 245 ms
+Completed depth 11. Best score: 40. Candidates: 1. Nodes: 510138. TT Size: 337787. Time: 794 ms
+Completed depth 12. Best score: -2040. Candidates: 1. Nodes: 1508158. TT Size: 1013840. Time: 2430 ms
+Completed depth 13. Best score: 20. Candidates: 2. Nodes: 4866591. TT Size: 3268058. Time: 8173 ms
+Completed depth 14. Best score: -2040. Candidates: 1. Nodes: 13607222. TT Size: 8972649. Time: 24331 ms
+Completed depth 15. Best score: 20. Candidates: 1. Nodes: 42385191. TT Size: 28765480. Time: 81157 ms
+
+AI thought for 81160 ms
+
+  1 2 3 4 5 6 7 8 9
+A . . . . . . . . .
+B . . . . . . . . .
+C . . . . . B . . .
+D . . . W W B . . .
+E . . . . B W . . .
+F . . . . . . . . .
+G . . . . . . . . .
+H . . . . . . . . .
+I . . . . . . . . .
+
+------------------------------ RUN 2 -------------------------------
+
+Enter your move (row col) or (letter number):c6
+ You placed a stone at (2, 5)
+  1 2 3 4 5 6 7 8 9
+A . . . . . . . . .
+B . . . . . . . . .
+C . . . . . B . . .
+D . . . . W B . . .
+E . . . . B W . . .
+F . . . . . . . . .
+G . . . . . . . . .
+H . . . . . . . . .
+I . . . . . . . . .
+
+Heuristic: -40
+Player WHITE (AI) is thinking...
+
+Completed depth 1. Best score: 1000020. Candidates: 2. Nodes: 0. TT Size: 0. Time: 0 ms
+Completed depth 2. Best score: -2020. Candidates: 2. Nodes: 10. TT Size: 10. Time: 1 ms
+Completed depth 3. Best score: 60. Candidates: 2. Nodes: 52. TT Size: 42. Time: 2 ms
+Completed depth 4. Best score: -2060. Candidates: 1. Nodes: 253. TT Size: 188. Time: 4 ms
+Completed depth 5. Best score: 60. Candidates: 1. Nodes: 812. TT Size: 513. Time: 5 ms
+Completed depth 6. Best score: -2100. Candidates: 1. Nodes: 2749. TT Size: 1732. Time: 10 ms
+Completed depth 7. Best score: 40. Candidates: 2. Nodes: 7741. TT Size: 4816. Time: 17 ms
+Completed depth 8. Best score: -2040. Candidates: 1. Nodes: 22863. TT Size: 14303. Time: 37 ms
+Completed depth 9. Best score: 40. Candidates: 1. Nodes: 67689. TT Size: 43356. Time: 97 ms
+Completed depth 10. Best score: -2040. Candidates: 1. Nodes: 169829. TT Size: 108668. Time: 246 ms
+Completed depth 11. Best score: 40. Candidates: 1. Nodes: 510140. TT Size: 337788. Time: 769 ms
+Completed depth 12. Best score: -2040. Candidates: 1. Nodes: 1508164. TT Size: 1013844. Time: 2410 ms
+Completed depth 13. Best score: 20. Candidates: 2. Nodes: 4866601. TT Size: 3268062. Time: 8124 ms
+Completed depth 14. Best score: -2040. Candidates: 1. Nodes: 13607237. TT Size: 8972654. Time: 24310 ms
+Completed depth 15. Best score: 20. Candidates: 1. Nodes: 42385206. TT Size: 28765485. Time: 80612 ms
+
+AI thought for 80615 ms
+
+  1 2 3 4 5 6 7 8 9
+A . . . . . . . . .
+B . . . . . . . . .
+C . . . . . B . . .
+D . . . W W B . . .
+E . . . . B W . . .
+F . . . . . . . . .
+G . . . . . . . . .
+H . . . . . . . . .
+I . . . . . . . . .
+
+------------------------------ RUN 3 -------------------------------
+
+Enter your move (row col) or (letter number):c6
+ You placed a stone at (2, 5)
+  1 2 3 4 5 6 7 8 9
+A . . . . . . . . .
+B . . . . . . . . .
+C . . . . . B . . .
+D . . . . W B . . .
+E . . . . B W . . .
+F . . . . . . . . .
+G . . . . . . . . .
+H . . . . . . . . .
+I . . . . . . . . .
+
+Heuristic: -40
+Player WHITE (AI) is thinking...
+
+Completed depth 1. Best score: 1000020. Candidates: 2. Nodes: 0. TT Size: 0. Time: 0 ms
+Completed depth 2. Best score: -2020. Candidates: 2. Nodes: 10. TT Size: 10. Time: 1 ms
+Completed depth 3. Best score: 60. Candidates: 2. Nodes: 52. TT Size: 42. Time: 2 ms
+Completed depth 4. Best score: -2060. Candidates: 1. Nodes: 253. TT Size: 188. Time: 4 ms
+Completed depth 5. Best score: 60. Candidates: 1. Nodes: 812. TT Size: 513. Time: 5 ms
+Completed depth 6. Best score: -2100. Candidates: 1. Nodes: 2749. TT Size: 1732. Time: 10 ms
+Completed depth 7. Best score: 40. Candidates: 2. Nodes: 7741. TT Size: 4816. Time: 17 ms
+Completed depth 8. Best score: -2040. Candidates: 1. Nodes: 22863. TT Size: 14303. Time: 37 ms
+Completed depth 9. Best score: 40. Candidates: 1. Nodes: 67689. TT Size: 43356. Time: 97 ms
+Completed depth 10. Best score: -2040. Candidates: 1. Nodes: 169829. TT Size: 108668. Time: 246 ms
+Completed depth 11. Best score: 40. Candidates: 1. Nodes: 510140. TT Size: 337788. Time: 769 ms
+Completed depth 12. Best score: -2040. Candidates: 1. Nodes: 1508164. TT Size: 1013844. Time: 2410 ms
+Completed depth 13. Best score: 20. Candidates: 2. Nodes: 4866601. TT Size: 3268062. Time: 8124 ms
+Completed depth 14. Best score: -2040. Candidates: 1. Nodes: 13607237. TT Size: 8972654. Time: 24310 ms
+Completed depth 15. Best score: 20. Candidates: 1. Nodes: 42385206. TT Size: 28765485. Time: 80612 ms
+
+AI thought for 80615 ms
+
+  1 2 3 4 5 6 7 8 9
+A . . . . . . . . .
+B . . . . . . . . .
+C . . . . . B . . .
+D . . . W W B . . .
+E . . . . B W . . .
+F . . . . . . . . .
+G . . . . . . . . .
+H . . . . . . . . .
+I . . . . . . . . .

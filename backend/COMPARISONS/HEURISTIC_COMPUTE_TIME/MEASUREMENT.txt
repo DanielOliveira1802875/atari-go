@@ -1,0 +1,144 @@
+
+------------------------------ RUN 1 -------------------------------
+
+Enter your move (row col) or (letter number):c6
+ You placed a stone at (2, 5)
+  1 2 3 4 5 6 7 8 9
+A . . . . . . . . .
+B . . . . . . . . .
+C . . . . . B . . .
+D . . . . W B . . .
+E . . . . B W . . .
+F . . . . . . . . .
+G . . . . . . . . .
+H . . . . . . . . .
+I . . . . . . . . .
+
+Heuristic: -40
+Player WHITE (AI) is thinking...
+
+Completed depth 1. Best score: 1000020. Candidates: 2. Nodes: 0. TT Size: 0. Time: 0 ms
+Completed depth 2. Best score: -2020. Candidates: 2. Nodes: 10. TT Size: 10. Time: 1 ms
+Completed depth 3. Best score: 60. Candidates: 2. Nodes: 52. TT Size: 42. Time: 3 ms
+Completed depth 4. Best score: -2060. Candidates: 1. Nodes: 253. TT Size: 188. Time: 4 ms
+Completed depth 5. Best score: 60. Candidates: 1. Nodes: 812. TT Size: 513. Time: 6 ms
+Completed depth 6. Best score: -2100. Candidates: 1. Nodes: 2749. TT Size: 1732. Time: 10 ms
+Completed depth 7. Best score: 40. Candidates: 2. Nodes: 7741. TT Size: 4816. Time: 19 ms
+Completed depth 8. Best score: -2040. Candidates: 1. Nodes: 22863. TT Size: 14303. Time: 46 ms
+Completed depth 9. Best score: 40. Candidates: 1. Nodes: 67689. TT Size: 43356. Time: 133 ms
+Completed depth 10. Best score: -2040. Candidates: 1. Nodes: 169828. TT Size: 108667. Time: 335 ms
+Completed depth 11. Best score: 40. Candidates: 1. Nodes: 510138. TT Size: 337787. Time: 1034 ms
+Completed depth 12. Best score: -2040. Candidates: 1. Nodes: 1508158. TT Size: 1013840. Time: 3208 ms
+Completed depth 13. Best score: 20. Candidates: 2. Nodes: 4866591. TT Size: 3268058. Time: 10785 ms
+Completed depth 14. Best score: -2040. Candidates: 1. Nodes: 13607222. TT Size: 8972649. Time: 31713 ms
+Completed depth 15. Best score: 20. Candidates: 1. Nodes: 42385191. TT Size: 28765480. Time: 104859 ms
+
+Total time spent in computeHeuristic: 67626 ms
+AI thought for 104862 ms
+
+  1 2 3 4 5 6 7 8 9
+A . . . . . . . . .
+B . . . . . . . . .
+C . . . . . B . . .
+D . . . W W B . . .
+E . . . . B W . . .
+F . . . . . . . . .
+G . . . . . . . . .
+H . . . . . . . . .
+I . . . . . . . . .
+
+------------------------------ RUN 2 -------------------------------
+
+Enter your move (row col) or (letter number):c6
+ You placed a stone at (2, 5)
+  1 2 3 4 5 6 7 8 9
+A . . . . . . . . .
+B . . . . . . . . .
+C . . . . . B . . .
+D . . . . W B . . .
+E . . . . B W . . .
+F . . . . . . . . .
+G . . . . . . . . .
+H . . . . . . . . .
+I . . . . . . . . .
+
+Heuristic: -40
+Player WHITE (AI) is thinking...
+Removing no successors.
+Completed depth 1. Best score: 1000020. Candidates: 2. Nodes: 0. TT Size: 0. Time: 1 ms
+Completed depth 2. Best score: -2020. Candidates: 2. Nodes: 10. TT Size: 10. Time: 2 ms
+Completed depth 3. Best score: 60. Candidates: 2. Nodes: 52. TT Size: 42. Time: 3 ms
+Completed depth 4. Best score: -2060. Candidates: 1. Nodes: 251. TT Size: 186. Time: 5 ms
+Completed depth 5. Best score: 60. Candidates: 1. Nodes: 808. TT Size: 511. Time: 7 ms
+Completed depth 6. Best score: -2100. Candidates: 1. Nodes: 2741. TT Size: 1728. Time: 12 ms
+Completed depth 7. Best score: 40. Candidates: 2. Nodes: 7757. TT Size: 4839. Time: 22 ms
+Completed depth 8. Best score: -2040. Candidates: 1. Nodes: 22938. TT Size: 14357. Time: 52 ms
+Completed depth 9. Best score: 40. Candidates: 1. Nodes: 70557. TT Size: 45624. Time: 144 ms
+Completed depth 10. Best score: -2040. Candidates: 1. Nodes: 174714. TT Size: 112066. Time: 362 ms
+Completed depth 11. Best score: 40. Candidates: 1. Nodes: 551632. TT Size: 368023. Time: 1141 ms
+Completed depth 12. Best score: -2040. Candidates: 1. Nodes: 1561306. TT Size: 1050187. Time: 3326 ms
+Completed depth 13. Best score: 20. Candidates: 2. Nodes: 5420829. TT Size: 3675987. Time: 12159 ms
+Completed depth 14. Best score: -2040. Candidates: 1. Nodes: 14246946. TT Size: 9414481. Time: 33123 ms
+Completed depth 15. Best score: 20. Candidates: 1. Nodes: 43538109. TT Size: 29537154. Time: 107627 ms
+
+Total time spent in computeHeuristic: 69437 ms
+AI thought for 107630 ms
+
+  1 2 3 4 5 6 7 8 9
+A . . . . . . . . .
+B . . . . . . . . .
+C . . . . . B . . .
+D . . . W W B . . .
+E . . . . B W . . .
+F . . . . . . . . .
+G . . . . . . . . .
+H . . . . . . . . .
+I . . . . . . . . .
+
+------------------------------- RUN 3 -------------------------------
+
+Enter your move (row col) or (letter number):c6
+ You placed a stone at (2, 5)
+  1 2 3 4 5 6 7 8 9
+A . . . . . . . . .
+B . . . . . . . . .
+C . . . . . B . . .
+D . . . . W B . . .
+E . . . . B W . . .
+F . . . . . . . . .
+G . . . . . . . . .
+H . . . . . . . . .
+I . . . . . . . . .
+
+Heuristic: -40
+Player WHITE (AI) is thinking...
+Removing no successors.
+Completed depth 1. Best score: 1000020. Candidates: 2. Nodes: 0. TT Size: 0. Time: 0 ms
+Completed depth 2. Best score: -2020. Candidates: 2. Nodes: 10. TT Size: 10. Time: 1 ms
+Completed depth 3. Best score: 60. Candidates: 2. Nodes: 52. TT Size: 42. Time: 2 ms
+Completed depth 4. Best score: -2060. Candidates: 1. Nodes: 253. TT Size: 188. Time: 4 ms
+Completed depth 5. Best score: 60. Candidates: 1. Nodes: 812. TT Size: 513. Time: 6 ms
+Completed depth 6. Best score: -2100. Candidates: 1. Nodes: 2749. TT Size: 1732. Time: 10 ms
+Completed depth 7. Best score: 40. Candidates: 2. Nodes: 7741. TT Size: 4816. Time: 19 ms
+Completed depth 8. Best score: -2040. Candidates: 1. Nodes: 22863. TT Size: 14303. Time: 46 ms
+Completed depth 9. Best score: 40. Candidates: 1. Nodes: 67689. TT Size: 43356. Time: 127 ms
+Completed depth 10. Best score: -2040. Candidates: 1. Nodes: 169829. TT Size: 108668. Time: 336 ms
+Completed depth 11. Best score: 40. Candidates: 1. Nodes: 510140. TT Size: 337788. Time: 1032 ms
+Completed depth 12. Best score: -2040. Candidates: 1. Nodes: 1508164. TT Size: 1013844. Time: 3208 ms
+Completed depth 13. Best score: 20. Candidates: 2. Nodes: 4866601. TT Size: 3268062. Time: 10995 ms
+Completed depth 14. Best score: -2040. Candidates: 1. Nodes: 13607237. TT Size: 8972654. Time: 31884 ms
+Completed depth 15. Best score: 20. Candidates: 1. Nodes: 42385206. TT Size: 28765485. Time: 104967 ms
+
+Total time spent in computeHeuristic: 67696 ms
+AI thought for 104970 ms
+
+  1 2 3 4 5 6 7 8 9
+A . . . . . . . . .
+B . . . . . . . . .
+C . . . . . B . . .
+D . . . W W B . . .
+E . . . . B W . . .
+F . . . . . . . . .
+G . . . . . . . . .
+H . . . . . . . . .
+I . . . . . . . . .

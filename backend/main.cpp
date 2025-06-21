@@ -44,7 +44,7 @@ public:
                 std::cout << "Player " << (turn == BLACK ? "BLACK" : "WHITE") << " (AI) is thinking...\n";
                 auto t0 = std::chrono::high_resolution_clock::now();
 
-                Board best = minimax.getBestMove(board, std::chrono::milliseconds(5000), 64);
+                Board best = minimax.getBestMove(board, std::chrono::milliseconds(120000), 15);
 
                 auto t1 = std::chrono::high_resolution_clock::now();
                 auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
